@@ -30,7 +30,7 @@ export default function Profile() {
   });
   const [goal, setGoal] = useState({
     retirement_age: "65",
-    target_expenses: "2500",
+    target_expenses: "1000",
     est_inflation: "3",
   });
 
@@ -108,7 +108,7 @@ export default function Profile() {
 
     const numOfYearsTill85 = 85 - retirementAge;
 
-    const totalSumNeeded = projectedLivingExpenses * numOfYearsTill85;
+    const totalSumNeeded = projectedLivingExpenses * numOfYearsTill85 * 12;
 
     setPLExpenses(projectedLivingExpenses);
     setTotalSum(totalSumNeeded);
@@ -153,7 +153,7 @@ export default function Profile() {
         >
           <button
             type="button"
-            class="btn-close"
+            className="btn-close"
             data-dismiss="modal"
             aria-label="Close"
             onClick={() => setShow(false)}
@@ -267,7 +267,7 @@ export default function Profile() {
       >
         <button
           type="button"
-          class="btn-close"
+          className="btn-close"
           data-dismiss="modal"
           aria-label="Close"
           onClick={() => setEditGoal(false)}
