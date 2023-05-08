@@ -16,7 +16,7 @@ root.render(
       domain={domain}
       clientId={clientId}
       authorizationParams={{
-        redirect_uri: "http://localhost:3000",
+        redirect_uri: "http://localhost:8080",
         audience: process.env.REACT_APP_AUDIENCE,
         scope: "openid profile email phone",
       }}
