@@ -1,4 +1,4 @@
-.modal {
+.modal-content {
   font-family: sans-serif;
   position: fixed;
   width: 50%;
@@ -62,7 +62,7 @@ button {
 }
 
 .modal-footer {
-  border-top: 1px solid #e9ecef;
+  width: 100%;
   display: flex;
   justify-content: center;
   gap: 1rem;
@@ -89,6 +89,16 @@ button {
 
 .field {
   width: 35vw;
+  height: 1.25rem;
+  border-radius: 4px;
+  position: relative;
+  background-color: #ffffff4d;
+  transition: 0.3s all;
+  float: right;
+}
+
+.field-2 {
+  width: 25vw;
   height: 1.25rem;
   border-radius: 4px;
   position: relative;
