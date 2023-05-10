@@ -21,11 +21,6 @@ export default function NavBar() {
           <img className="logo" src={logo} />
           <br />
         </Navbar.Brand>
-        <Nav as={Link} to="/dashboard">
-          <DashboardOutlinedIcon />
-          <br />
-          DASHBOARD
-        </Nav>
         <Nav as={Link} to="/profile">
           <AccountBoxOutlinedIcon />
           <br />

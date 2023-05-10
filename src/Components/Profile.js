@@ -215,6 +215,7 @@ export default function Profile() {
                   value={new Date(doBirth).toDateString()}
                   onFocus={() => setShowCalendar(true)}
                   readOnly
+                  className="field"
                 />
                 <Calendar
                   className={showCalendar ? "" : "hide"}
@@ -237,6 +238,7 @@ export default function Profile() {
           </Modal.Footer>
         </Modal>
       </div>
+
       <div className="financial-goal">Financial Goal:</div>
       {goal ? (
         <div>

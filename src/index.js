@@ -9,6 +9,8 @@ import { Auth0Provider } from "@auth0/auth0-react";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 const domain = process.env.REACT_APP_AUTH0_DOMAIN;
 const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
+const redirect_uri = process.env.REACT_APP_AUTH0_CALLBACK_URL;
+const audience = process.env.REACT_APP_AUTH0_AUDIENCE;
 
 root.render(
   <BrowserRouter>
@@ -16,8 +18,8 @@ root.render(
       domain={domain}
       clientId={clientId}
       authorizationParams={{
-        redirect_uri: "http://localhost:8080",
-        audience: process.env.REACT_APP_AUDIENCE,
+        redirect_uri: redirect_uri,
+        audience: audience,
         scope: "openid profile email phone",
       }}
     >

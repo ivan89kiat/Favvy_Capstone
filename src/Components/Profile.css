@@ -1,10 +1,10 @@
 .modal-content {
   font-family: sans-serif;
   position: fixed;
-  width: 50%;
+  width: 40%;
   height: 50vh;
   z-index: 1040;
-  top: 30%;
+  top: 10%;
   left: 30%;
   background-color: white;
   border: 1px solid #00000033;
@@ -88,7 +88,7 @@ button {
 }
 
 .field {
-  width: 35vw;
+  width: 30vw;
   height: 1.25rem;
   border-radius: 4px;
   position: relative;
@@ -98,7 +98,7 @@ button {
 }
 
 .field-2 {
-  width: 25vw;
+  width: 23vw;
   height: 1.25rem;
   border-radius: 4px;
   position: relative;
@@ -114,4 +114,8 @@ button {
 
 .react-calendar.hide {
   display: none;
+}
+.react-calendar__navigation {
+  display: flex;
+  width: 100%;
 }
