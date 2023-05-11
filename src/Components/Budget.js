@@ -48,23 +48,23 @@ export default function Budget() {
   ]);
 
   const budgetData = [
-    { id: 0, name: "Food", amount: 1000, spending: 500, available: 500 },
+    { id: 0, name: "Food", amount: 1000, spending: 500, balance: 500 },
     {
       id: 1,
       name: "Transportation",
       amount: 300,
       spending: 100,
-      available: 200,
+      balance: 200,
     },
     {
       id: 2,
       name: "Entertainment",
       amount: 300,
       spending: 150,
-      available: 150,
+      balance: 150,
     },
-    { id: 3, name: "Household", amount: 300, spending: 150, available: 150 },
-    { id: 4, name: "Housing", amount: 600, spending: 600, available: 0 },
+    { id: 3, name: "Household", amount: 300, spending: 150, balance: 150 },
+    { id: 4, name: "Housing", amount: 600, spending: 600, balance: 0 },
   ];
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function Budget() {
     let sum = 0;
 
     for (let i = 0; i < budgetData.length; i++) {
-      sum += budgetData[i].available;
+      sum += budgetData[i].balance;
     }
     return setBalance(sum);
   };
@@ -133,6 +133,28 @@ export default function Budget() {
   //     { headers: { Authorization: `Bearer ${accessToken}` } }
   //   );
   // };
+
+  const resetEdit = () => {
+    setEdit(false);
+    setSelectedCategory("");
+    setBudgetId("");
+    setAmount(0);
+  };
+
+  const resetAddBudget = () => {
+    setShow(false);
+    setSelectedCategory("");
+    setAmount(0);
+  };
+
+  const handleAmountChange = (e) => {
+    let val = e.target.value;
+    if (val.match(/[^0-9]/)) {
+      return e.preventDefault();
+    }
+    setAmount(Number(val));
+  };
+
   console.log(budgetId);
   return (
     <div>
@@ -158,11 +180,7 @@ export default function Budget() {
               className="btn-close"
               data-dismiss="modal"
               aria-label="Close"
-              onClick={() => {
-                setShow(false);
-                setSelectedCategory("");
-                setAmount(0);
-              }}
+              onClick={resetAddBudget}
             >
               <span aria-hidden="true">&times;</span>
             </button>
@@ -201,13 +219,7 @@ export default function Budget() {
                       value={amount}
                       margin="normal"
                       inputProps={{ inputMode: "numeric" }}
-                      onChange={(e) => {
-                        let val = e.target.value;
-                        if (val.match(/[^0-9]/)) {
-                          return e.preventDefault();
-                        }
-                        setAmount(Number(val));
-                      }}
+                      onChange={handleAmountChange}
                     />
                   </FormControl>
                   <Button variant="contained" type="submit">
@@ -216,11 +228,7 @@ export default function Budget() {
                   <Button
                     variant="contained"
                     color="secondary"
-                    onClick={() => {
-                      setShow(false);
-                      setSelectedCategory("");
-                      setAmount(0);
-                    }}
+                    onClick={resetAddBudget}
                   >
                     Cancel
                   </Button>
@@ -252,7 +260,7 @@ export default function Budget() {
                     </TableCell>
                     <TableCell align="center">$ {budget.amount}</TableCell>
                     <TableCell align="center">$ {budget.spending}</TableCell>
-                    <TableCell align="center">$ {budget.available}</TableCell>
+                    <TableCell align="center">$ {budget.balance}</TableCell>
                     <TableCell align="center">
                       <Button
                         size="small"
@@ -283,12 +291,7 @@ export default function Budget() {
               className="btn-close"
               data-dismiss="modal"
               aria-label="Close"
-              onClick={() => {
-                setEdit(false);
-                setSelectedCategory("");
-                setBudgetId("");
-                setAmount(0);
-              }}
+              onClick={resetEdit}
             >
               <span aria-hidden="true">&times;</span>
             </button>
@@ -320,13 +323,7 @@ export default function Budget() {
                       value={amount}
                       margin="normal"
                       inputProps={{ inputMode: "numeric" }}
-                      onChange={(e) => {
-                        let val = e.target.value;
-                        if (val.match(/[^0-9]/)) {
-                          return e.preventDefault();
-                        }
-                        setAmount(Number(val));
-                      }}
+                      onChange={handleAmountChange}
                     />
                   </FormControl>{" "}
                   <Button variant="contained" type="submit">
@@ -335,12 +332,7 @@ export default function Budget() {
                   <Button
                     variant="contained"
                     color="secondary"
-                    onClick={() => {
-                      setEdit(false);
-                      setSelectedCategory("");
-                      setBudgetId("");
-                      setAmount(0);
-                    }}
+                    onClick={resetEdit}
                   >
                     Cancel
                   </Button>
