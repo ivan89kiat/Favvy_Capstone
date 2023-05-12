@@ -1,3 +1,8 @@
 .css-79ws1d-MuiModal-root {
   overflow: auto;
 }
+
+.add-portfolio-button {
+  display: flex;
+  justify-content: right;
+}

@@ -131,19 +131,23 @@ export default function Investment() {
     setJsonResults([]);
   };
 
-  console.log("selectedCompany", selectedCompany);
-  const displaySearchResult = jsonResults.slice(0, 8).map((result) => (
-    <ListItemButton
-      key={result["1. symbol"]}
-      id={result["1. symbol"]}
-      selected={selectedCompany === result["1. symbol"]}
-      onClick={(e) => {
-        setSelectedCompany(e.target.id);
-      }}
-    >
-      Sym:{result["1. symbol"]} | Name:{result["2. name"]}
-    </ListItemButton>
-  ));
+  console.log("jsonResults", jsonResults);
+
+  const displaySearchResult = jsonResults
+    .slice(0, 8)
+    .filter((result) => result["4. region"] === "United States")
+    .map((item) => (
+      <ListItemButton
+        key={item["1. symbol"]}
+        id={item["1. symbol"]}
+        selected={selectedCompany === item["1. symbol"]}
+        onClick={(e) => {
+          setSelectedCompany(e.target.id);
+        }}
+      >
+        Sym:{item["1. symbol"]} | Name:{item["2. name"]}
+      </ListItemButton>
+    ));
 
   const resetCompanyData = () => {
     setShowCompany(false);
@@ -157,7 +161,7 @@ export default function Investment() {
         `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${selectedCompany}&apikey=${process.env.STOCK_API_KEY}`
       )
       .then((res) => {
-        console.log(res.data);
+        setCompanyData(res.data);
       })
       .catch((error) => console.log(error.message));
     setShowCompany(true);
@@ -224,10 +228,10 @@ export default function Investment() {
       </Modal>
       <Modal open={showCompany} onClose={resetCompanyData}>
         <div>
+          <CompanyDetailsTemplate data={companyData} />
           <Button variant="contained" onClick={resetCompanyData}>
             Close
           </Button>
-          <CompanyDetailsTemplate />
         </div>
       </Modal>
     </div>

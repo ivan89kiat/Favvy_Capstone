@@ -3,11 +3,6 @@ import {
   Typography,
   Paper,
   Grid,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
   Card,
   CardHeader,
   CardContent,
@@ -17,74 +12,112 @@ import {
 import "./CompanyDetailsTemplate.css";
 
 export default function CompanyDetailsTemplate(props) {
+  const data = props.data;
+
+  const convertLargeNumber = (value) => {
+    let val = 0;
+    if (value >= Math.pow(10, 12)) {
+      val = (value / Math.pow(10, 12)).toFixed(2) + "t";
+    } else if (value >= Math.pow(10, 9)) {
+      val = (value / Math.pow(10, 9)).toFixed(2) + "b";
+    } else if (value >= Math.pow(10, 6)) {
+      val = (value / Math.pow(10, 6)).toFixed(2) + "m";
+    }
+    return val;
+  };
+
   return (
     <Paper elevation={3} sx={{ padding: "20px", marginBottom: "20px" }}>
       <Typography variant="h5" gutterBottom>
-        Company Overview
+        {data.Name ? `Company Overview (${data.Name})` : "No Available Data"}
       </Typography>
-      <Divider sx={{ marginBottom: "10px" }} />
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={12}>
-          <Card>
-            <CardHeader title="Description" />
-            <CardContent></CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card sx={{ height: 267 }}>
-            <CardHeader title="Other Details" />
-            <CardContent>
-              Exchange:
-              <br />
-              Country:
-              <br />
-              Sector:
-              <br />
-              Industry:
-              <br />
-              Fiscal Year:
-              <br />
-              Market Cap:
-              <br />
-              Div. Yield:
-              <br />
-              Div. per Share:
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={9}>
-          <Card>
-            <CardHeader title="Financial Summary" />
-            <CardContent>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Year</TableCell>
-                    <TableCell>Revenue</TableCell>
-                    <TableCell>Net Income</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>2022</TableCell>
-                    <TableCell>$1,000,000</TableCell>
-                    <TableCell>$500,000</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>2021</TableCell>
-                    <TableCell>$900,000</TableCell>
-                    <TableCell>$450,000</TableCell>
-                  </TableRow>
-                  {/* Add more rows as needed */}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-      <Divider sx={{ marginBottom: "10px", marginTop: "10px" }} />
-      <Button sx={{ justifySelf: "end" }}>Add Portfolio</Button>
+      {data.Name && (
+        <div>
+          <Divider sx={{ marginBottom: "10px" }} />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={12}>
+              <Card>
+                <CardHeader title="Description" />
+                <CardContent>{data.Description}</CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ height: 300 }}>
+                <CardHeader title="Other Details" />
+                <CardContent>
+                  Symbol: {data.Symbol}
+                  <br />
+                  Exchange: {data.Exchange}
+                  <br />
+                  Country: {data.Country}
+                  <br />
+                  Sector: {data.Sector}
+                  <br />
+                  Industry: {data.Industry}
+                  <br />
+                  Fiscal Year: {data.FiscalYearEnd}
+                  <br />
+                  Market Cap: $
+                  {convertLargeNumber(Number(data.MarketCapitalization))}
+                  <br />
+                  Div. Yield: {(Number(data.DividendYield) * 100).toFixed(2)}%
+                  <br />
+                  Div. per Share: ${data.DividendPerShare}
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Card sx={{ height: 300 }}>
+                <CardHeader title="Financial Summary" />
+                <CardContent>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6} md={6}>
+                      <Typography>
+                        EBITDA: ${convertLargeNumber(Number(data.EBITDA))}
+                        <br />
+                        EPS TTM: ${data.EPS}
+                        <br />
+                        Gross Profit TTM: $
+                        {convertLargeNumber(Number(data.GrossProfitTTM))}
+                        <br />
+                        P/E Ratio: {data.PERatio}
+                        <br />
+                        P/B Ratio: {data.PriceToBookRatio}
+                        <br />
+                        Operating Margin TTM: {data.OperatingMarginTTM}
+                        <br />
+                        Analyst Target: ${data.AnalystTargetPrice}
+                        <br />
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} md={6}>
+                      <Typography>
+                        Revenue TTM: $
+                        {convertLargeNumber(Number(data.RevenueTTM))}
+                        <br />
+                        ROE TTM: ${data.ReturnOnEquityTTM}
+                        <br />
+                        Profit Margin: ${data.ProfitMargin}
+                        <br />
+                        Book Value: ${data.BookValue}
+                        <br />
+                        High: ${data["52WeekHigh"]}
+                        <br />
+                        Low: ${data["52WeekLow"]}
+                        <br />
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+          <Divider sx={{ marginBottom: "10px", marginTop: "10px" }} />
+          <div className="add-portfolio-button">
+            <Button>Add Portfolio</Button>
+          </div>
+        </div>
+      )}
     </Paper>
   );
 }
