@@ -2,3 +2,8 @@
   background-color: #ffffff;
   color: black;
 }
+
+.reduce-delete-portfolio-title {
+  display: flex;
+  justify-content: center;
+}

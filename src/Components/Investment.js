@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import {
   Box,
@@ -12,6 +12,8 @@ import {
   ListItemButton,
   List,
   ButtonBase,
+  InputLabel,
+  Divider,
 } from "@mui/material";
 import axios from "axios";
 
@@ -22,16 +24,27 @@ export default function Investment() {
   const [searchPortfolio, setSearchPortfolio] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showCompany, setShowCompany] = useState(false);
+  const [showReduce, setShowReduce] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [input, setInput] = useState("");
   const [jsonResults, setJsonResults] = useState([]);
   const [companyData, setCompanyData] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedCompanyBE, setSelectedCompanyBE] = useState("");
+  const [units, setUnits] = useState(0);
+  const [price, setPrice] = useState(0);
 
+  useEffect(() => {
+    // axios.get(`${process.env.BACKEND_URL}/investment`, {
+    //   headers: { Authorization: `Bearer ${accessToken}` },
+    // });
+  }, []);
   const data = [
     {
       id: 1,
       date: "09 May 2023",
       symbol: "IBM",
+      name: "International Business Machines",
       open: 121.9,
       close: 121.17,
       purchasePrice: 102.85,
@@ -41,15 +54,17 @@ export default function Investment() {
       id: 2,
       date: "09 May 2023",
       symbol: "IBM",
+      name: "International Business Machines",
       open: 121.9,
       close: 121.17,
       purchasePrice: 102.85,
       units: 5000,
     },
     {
-      id: 3,
+      id: 10,
       date: "09 May 2023",
       symbol: "IBM",
+      name: "International Business Machines",
       open: 121.9,
       close: 121.17,
       purchasePrice: 102.85,
@@ -58,7 +73,6 @@ export default function Investment() {
   ];
 
   const columns = [
-    { field: "id", headerName: "ID", width: 60, align: "center" },
     { field: "symbol", headerName: "Symbol", width: 80, align: "center" },
     {
       field: "open",
@@ -131,8 +145,6 @@ export default function Investment() {
     setJsonResults([]);
   };
 
-  console.log("jsonResults", jsonResults);
-
   const displaySearchResult = jsonResults
     .slice(0, 8)
     .filter((result) => result["4. region"] === "United States")
@@ -167,16 +179,94 @@ export default function Investment() {
     setShowCompany(true);
   };
 
+  const displayUserPortfolio = data.map((item) => (
+    <ListItemButton
+      key={item.id}
+      id={data.indexOf(item.id)}
+      value={item.id}
+      onClick={(e) => {
+        if (showDelete) {
+          alert(
+            `Are you sure you want to delete ${item.name} from your portfolio?`
+          );
+        }
+        setSelectedCompany(e.target.id);
+        setSelectedCompanyBE(e.target.value);
+      }}
+      selected={Number(selectedCompany) === data.indexOf(item.id)}
+    >
+      Sym:{item.symbol} | Name: {item.name}
+    </ListItemButton>
+  ));
+
+  const resetPortfolio = () => {
+    setSelectedCompany("");
+    setUnits(0);
+    setPrice(0);
+    setSelectedCompanyBE("");
+    setShowDelete(false);
+    setShowReduce(false);
+  };
+
+  // const handleReducePortfolio = async (e) => {
+  //   e.preventDefault();
+  //   const updatedUnits = data[selectedCompany].units - units;
+  //   const totalSales = units * price;
+  //   await axios.put(
+  //     `${process.env.BACKEND_URL}/investment/${selectedCompanyBE}`,
+  //     {
+  //       units: updatedUnits,
+  //     },
+  //     { headers: { Authorization: `Bearer ${accessToken}` } }
+  //   );
+
+  //   await axios.put(
+  //     `${process.env.BACKEND_URL}/balance`,
+  //     {
+  //       totalSales,
+  //     },
+  //     { headers: { Authorization: `Bearer ${accessToken}` } }
+  //   );
+  //   resetPortfolio();
+  // };
+
+  // const handleDeletePortfolio = async (e) => {
+  //   e.preventDefault();
+  //   if (data[selectedCompany].units !== 0) {
+  //     alert(`Please clear off your holdings of ${data[selectedCompany].name}`);
+  //   } else
+  //     await axios.put(
+  //       `${process.env.BACKEND_URL}/investment/${selectedCompanyBE}`,
+  //       {
+  //         units: updatedUnits,
+  //       },
+  //       { headers: { Authorization: `Bearer ${accessToken}` } }
+  //     );
+
+  //   await axios.put(
+  //     `${process.env.BACKEND_URL}/balance`,
+  //     {
+  //       totalSales,
+  //     },
+  //     { headers: { Authorization: `Bearer ${accessToken}` } }
+  //   );
+  //   resetPortfolio();
+  // };
+
+  console.log(selectedCompany);
   return (
     <div>
-      This is investment
+      <h2>Investment Portfolio</h2>
       <Box sx={{ width: "100%" }}>
         <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-          <Button size="small" onClick={() => setShowCompany(true)}>
+          <Button size="small" onClick={() => setShowDelete(true)}>
             Remove portfolio
           </Button>
           <Button size="small" onClick={() => setSearchPortfolio(true)}>
             Search Portfolio
+          </Button>
+          <Button size="small" onClick={() => setShowReduce(true)}>
+            Reduce portfolio
           </Button>
         </Stack>
         <DataGrid
@@ -233,6 +323,75 @@ export default function Investment() {
             Close
           </Button>
         </div>
+      </Modal>
+
+      <Modal open={showReduce || showDelete} onClose={resetPortfolio}>
+        <Box sx={style} overflow={true}>
+          <h2 className="reduce-delete-portfolio-title">
+            {showReduce ? "Reduce Portfolio" : "Delete Portfolio"}
+          </h2>
+          <Divider sx={{ marginBottom: "10px" }} />
+          <form>
+            {/* {handleReducePortfolio} */}
+            {data ? displayUserPortfolio : "You have no portfolio"}
+            <Divider sx={{ marginBottom: "10px" }} />
+            <Typography color={showDelete ? "red" : "blue"}>
+              {showReduce &&
+                selectedCompany &&
+                `Name: ${data[selectedCompany].name}`}
+              {showDelete &&
+                selectedCompany &&
+                `Press Confirm to DELETE ${data[selectedCompany].name} from your portfolio`}
+            </Typography>
+            {selectedCompany && showReduce && (
+              <FormControl fullWidth>
+                <TextField
+                  className="reduce-units"
+                  label="Reduce Holdings (Units)"
+                  variant="outlined"
+                  value={units}
+                  margin="normal"
+                  inputProps={{ inputMode: "numeric" }}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val.match(/[^0-9]/)) {
+                      return e.preventDefault();
+                    }
+                    setUnits(Number(val));
+                  }}
+                />
+                <TextField
+                  className="selling-price"
+                  label="Selling Price ($)"
+                  variant="outlined"
+                  value={price}
+                  type="number"
+                  margin="normal"
+                  inputProps={{
+                    pattern: "^[0-9]*\\.?[0-9]{0,2}$",
+                  }}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (/^\d*\.?\d{0,2}$/.test(val)) {
+                      setPrice(Number(val));
+                    }
+                  }}
+                />
+              </FormControl>
+            )}
+            <Divider sx={{ marginBottom: "10px" }} />
+            <Button variant="contained" type="submit">
+              Confirm
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={resetPortfolio}
+            >
+              Cancel
+            </Button>
+          </form>
+        </Box>
       </Modal>
     </div>
   );
