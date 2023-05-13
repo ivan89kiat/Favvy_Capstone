@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Grid,
   Paper,
@@ -18,6 +18,7 @@ import {
   TableContainer,
   TableBody,
   Modal,
+  ListItemButton,
   FormControl,
 } from "@mui/material";
 import axios from "axios";
@@ -32,6 +33,9 @@ export default function DebtManagement() {
   const [showResult, setShowResult] = useState(false);
   const [showLoanForm, setShowLoanForm] = useState(false);
   const [title, setTitle] = useState("");
+  const [totalLiabilities, setTotalLiabilities] = useState(0);
+  const [showDelete, setShowDelete] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState("");
   const [data, setData] = useState([
     { id: 1, title: "Housing", amount: 150000, interest: 2.5, tenure: 120 },
     {
@@ -48,26 +52,34 @@ export default function DebtManagement() {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: 400,
+    width: 500,
     bgcolor: "background.paper",
     border: "2px solid #000",
     boxShadow: 24,
     p: 4,
   };
 
-  const calculateEMI = () => {
-    let interest = interestRate / 12 / 100;
-    let emi = Math.round(
-      (loanAmount * interest * Math.pow(1 + interest, loanTerm)) /
-        (Math.pow(1 + interest, loanTerm) - 1)
-    );
+  useEffect(() => {
+    calcCurrentLiabilities();
+  }, []);
 
-    let totalPayable = Math.round(emi * loanTerm);
-    let totalInterestPayable = Math.round(totalPayable - loanAmount);
-    setEMI(emi);
-    setTotalAmount(totalPayable);
-    setTotalInterest(totalInterestPayable);
-    setShowResult(true);
+  const calculateEMI = () => {
+    if (loanAmount === 0 || loanTerm === 0 || interestRate === 0) {
+      alert("Invalid input. Please enter number larger than 0");
+    } else {
+      let interest = interestRate / 12 / 100;
+      let emi = Math.round(
+        (loanAmount * interest * Math.pow(1 + interest, loanTerm)) /
+          (Math.pow(1 + interest, loanTerm) - 1)
+      );
+
+      let totalPayable = Math.round(emi * loanTerm);
+      let totalInterestPayable = Math.round(totalPayable - loanAmount);
+      setEMI(emi);
+      setTotalAmount(totalPayable);
+      setTotalInterest(totalInterestPayable);
+      setShowResult(true);
+    }
   };
 
   const resetLoanForm = () => {
@@ -75,20 +87,54 @@ export default function DebtManagement() {
     setTitle("");
   };
 
-  const handleSubmitLoanForm = async (e) => {
-    e.preventDefault();
-    await axios.post(`${process.env.BACKEND_URL}/loan`, {
-      title,
-      loanAmount,
-      loanTerm,
-      totalAmount,
-    });
+  // const handleSubmitLoanForm = async (e) => {
+  //   e.preventDefault();
+  //   await axios.post(`${process.env.BACKEND_URL}/loan`, {
+  //     title,
+  //     loanAmount,
+  //     loanTerm,
+  //     totalAmount,
+  //   });
+  // };
+
+  const calcCurrentLiabilities = () => {
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      sum += data[i].amount;
+    }
+    setTotalLiabilities(sum);
+  };
+
+  const displayUserLoan = data
+    ? data.map((item) => (
+        <ListItemButton
+          key={item.id}
+          id={data.findIndex((object) => object.id === item.id)}
+          onClick={(e) => {
+            alert(
+              `Are you sure you want to delete ${item.title} from your portfolio?`
+            );
+            setSelectedLoan(e.target.id);
+          }}
+          selected={
+            selectedLoan !== "" &&
+            Number(selectedLoan) ===
+              data.findIndex((object) => object.id === item.id)
+          }
+        >
+          Loan Title: {item.title} | Amount Payable: ${item.amount}
+        </ListItemButton>
+      ))
+    : null;
+
+  const resetRemoveLoan = () => {
+    setShowDelete(false);
+    setSelectedLoan("");
   };
 
   return (
     <div>
       <h2>Debt Management</h2>
-
       <Paper
         sx={{
           padding: "20px",
@@ -98,14 +144,23 @@ export default function DebtManagement() {
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Paper>
-              <Typography>Hello</Typography>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" align="left">
+                    Current Liabilities: ${totalLiabilities.toLocaleString()}
+                  </Typography>
+                  <Divider sx={{ marginBottom: "3px" }} />
+                </CardContent>
+              </Card>
             </Paper>
           </Grid>
           <Divider sx={{ marginBottom: "10px" }} />
           <Grid item xs={6}>
             <Paper>
               <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                <Button size="small">Remove Loan</Button>
+                <Button size="small" onClick={() => setShowDelete(true)}>
+                  Remove Loan
+                </Button>
               </Stack>
               <TableContainer>
                 <Table>
@@ -121,8 +176,12 @@ export default function DebtManagement() {
                     {data.map((row) => (
                       <TableRow key={row.id}>
                         <TableCell align="center">{row.title}</TableCell>
-                        <TableCell align="center">{row.amount}</TableCell>
-                        <TableCell align="center">{row.interest}</TableCell>
+                        <TableCell align="center">
+                          {row.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell align="center">
+                          {row.interest.toFixed(2)}
+                        </TableCell>
                         <TableCell align="center">{row.tenure}</TableCell>
                       </TableRow>
                     ))}
@@ -136,7 +195,6 @@ export default function DebtManagement() {
             <Paper>
               <Box>
                 <Typography>Loan Calculator</Typography>
-
                 <TextField
                   label="Loan Amount ($)"
                   variant="outlined"
@@ -144,6 +202,7 @@ export default function DebtManagement() {
                   margin="normal"
                   fullWidth
                   inputProps={{ inputMode: "numeric" }}
+                  disabled={showResult}
                   onChange={(e) => {
                     let val = e.target.value;
                     if (val.match(/[^0-9]/)) {
@@ -159,6 +218,7 @@ export default function DebtManagement() {
                   margin="normal"
                   fullWidth
                   inputProps={{ inputMode: "numeric" }}
+                  disabled={showResult}
                   onChange={(e) => {
                     let val = e.target.value;
                     if (val.match(/[^0-9]/)) {
@@ -181,6 +241,7 @@ export default function DebtManagement() {
                     inputProps={{
                       pattern: "^[0-9]*\\.?[0-9]{0,2}$",
                     }}
+                    disabled={showResult}
                     onChange={(e) => {
                       let val = e.target.value;
                       if (/^\d*\.?\d{0,2}$/.test(val)) {
@@ -216,6 +277,13 @@ export default function DebtManagement() {
                   >
                     Add Loan
                   </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => setShowResult(false)}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               )}
             </Paper>
@@ -227,6 +295,8 @@ export default function DebtManagement() {
           <form>
             {/* handleSubmitLoanForm */}
             <FormControl fullWidth>
+              <Typography>Add Loan Title:</Typography>
+              <Divider sx={{ marginBottom: "8px" }} />
               <TextField
                 label="Loan Title"
                 variant="outlined"
@@ -244,6 +314,36 @@ export default function DebtManagement() {
                 Cancel
               </Button>
             </FormControl>
+          </form>
+        </Box>
+      </Modal>
+      {/* Display when remove loan is clicked */}
+      <Modal open={showDelete}>
+        <Box sx={style} overflow={true}>
+          <h2 className="delete-loan-title">Remove Loan</h2>
+          <Divider sx={{ marginBottom: "10px" }} />
+          <form>
+            {/* {handleRemoveLoan} */}
+            {data ? displayUserLoan : "You have no loan"}
+            <Divider sx={{ marginBottom: "10px" }} />
+            <Typography color="red">
+              {selectedLoan
+                ? `Press Confirm to DELETE ${data[selectedLoan].title} from your
+              portfolio`
+                : null}
+            </Typography>
+            <div className="remove-loan-btn">
+              <Button variant="contained" type="submit">
+                Confirm
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={resetRemoveLoan}
+              >
+                Cancel
+              </Button>
+            </div>
           </form>
         </Box>
       </Modal>
