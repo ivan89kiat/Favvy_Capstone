@@ -113,9 +113,7 @@ export default function CompanyDetailsTemplate(props) {
             </Grid>
           </Grid>
           <Divider sx={{ marginBottom: "10px", marginTop: "10px" }} />
-          <div className="add-portfolio-button">
-            <Button>Add Portfolio</Button>
-          </div>
+          <div className="add-portfolio-button"></div>
         </div>
       )}
     </Paper>

@@ -8,11 +8,8 @@ import {
   Typography,
   FormControl,
   TextField,
-  Paper,
   ListItemButton,
   List,
-  ButtonBase,
-  InputLabel,
   Divider,
 } from "@mui/material";
 import axios from "axios";
@@ -33,13 +30,16 @@ export default function Investment() {
   const [selectedCompanyBE, setSelectedCompanyBE] = useState("");
   const [units, setUnits] = useState(0);
   const [price, setPrice] = useState(0);
+  const [data, setData] = useState([]);
 
   useEffect(() => {
+    setData(jsonData);
     // axios.get(`${process.env.BACKEND_URL}/investment`, {
     //   headers: { Authorization: `Bearer ${accessToken}` },
     // });
   }, []);
-  const data = [
+
+  const jsonData = [
     {
       id: 1,
       date: "09 May 2023",
@@ -63,7 +63,7 @@ export default function Investment() {
     {
       id: 10,
       date: "09 May 2023",
-      symbol: "IBM",
+      symbol: "APLE",
       name: "International Business Machines",
       open: 121.9,
       close: 121.17,
@@ -162,6 +162,7 @@ export default function Investment() {
     ));
 
   const resetCompanyData = () => {
+    setJsonResults([]);
     setShowCompany(false);
     setCompanyData([]);
     setSelectedCompany("");
@@ -179,25 +180,30 @@ export default function Investment() {
     setShowCompany(true);
   };
 
-  const displayUserPortfolio = data.map((item) => (
-    <ListItemButton
-      key={item.id}
-      id={data.indexOf(item.id)}
-      value={item.id}
-      onClick={(e) => {
-        if (showDelete) {
-          alert(
-            `Are you sure you want to delete ${item.name} from your portfolio?`
-          );
-        }
-        setSelectedCompany(e.target.id);
-        setSelectedCompanyBE(e.target.value);
-      }}
-      selected={Number(selectedCompany) === data.indexOf(item.id)}
-    >
-      Sym:{item.symbol} | Name: {item.name}
-    </ListItemButton>
-  ));
+  const displayUserPortfolio = data
+    ? data.map((item) => (
+        <ListItemButton
+          key={item.id}
+          id={data.findIndex((object) => object.id === item.id)}
+          value={item.id}
+          onClick={(e) => {
+            if (showDelete) {
+              alert(
+                `Are you sure you want to delete ${item.name} from your portfolio?`
+              );
+            }
+            setSelectedCompany(e.target.id);
+            setSelectedCompanyBE(e.target.value);
+          }}
+          selected={
+            Number(selectedCompany) ===
+            data.findIndex((object) => object.id === item.id)
+          }
+        >
+          Sym:{item.symbol} | Name: {item.name}
+        </ListItemButton>
+      ))
+    : null;
 
   const resetPortfolio = () => {
     setSelectedCompany("");
@@ -253,7 +259,20 @@ export default function Investment() {
   //   resetPortfolio();
   // };
 
-  console.log(selectedCompany);
+  // const handleAddPortfolio = async (e) => {
+  //   e.preventDefault();
+  //   axios.post(
+  //     `${process.env.BACKEND_URL}/investment`,
+  //     { selectedCompany },
+  //     { headers: { Authorization: `Bearer ${accessToken}` } }
+  //   );
+  //   resetPortfolio();
+  // };
+
+  const handleCloseCompanyView = () => {
+    setShowCompany(false);
+  };
+
   return (
     <div>
       <h2>Investment Portfolio</h2>
@@ -263,24 +282,32 @@ export default function Investment() {
             Remove portfolio
           </Button>
           <Button size="small" onClick={() => setSearchPortfolio(true)}>
-            Search Portfolio
+            Add Portfolio
           </Button>
           <Button size="small" onClick={() => setShowReduce(true)}>
             Reduce portfolio
           </Button>
         </Stack>
-        <DataGrid
-          sx={{ color: "white", root: "white", text: { color: "white" } }}
-          rows={rows}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 5 },
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-        />
+
+        {/* Display portfolio feature */}
+        {data.length > 0 ? (
+          <DataGrid
+            sx={{ color: "white", root: "white", text: { color: "white" } }}
+            rows={rows}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize: 5 },
+              },
+            }}
+            pageSizeOptions={[5, 10]}
+          />
+        ) : (
+          <Typography>"Please add a portfolio"</Typography>
+        )}
       </Box>
+
+      {/* Search portfolio feature */}
       <Modal
         open={searchPortfolio}
         onClose={resetSearch}
@@ -289,7 +316,7 @@ export default function Investment() {
       >
         <Box sx={style}>
           <form onSubmit={handleSearch}>
-            <FormControl>
+            <FormControl fullWidth>
               <TextField
                 className="search-stock"
                 label="search stock symbol"
@@ -298,33 +325,50 @@ export default function Investment() {
                 onChange={(e) => setInput(e.target.value)}
               />
             </FormControl>
-            <Button variant="contained" type="submit">
+            <Button variant="contained" type="submit" fullWidth>
               Search
             </Button>
           </form>
-          <List>{jsonResults ? displaySearchResult : null}</List>
-          <form>
-            <Button variant="contained" type="submit">
-              Add Portfolio
-            </Button>
-            <Button variant="contained" onClick={getCompanyData}>
-              View Company
-            </Button>
-            <Button variant="contained" color="secondary" onClick={resetSearch}>
-              Close
-            </Button>
-          </form>
+          {jsonResults.length > 0 && (
+            <div>
+              <List>{displaySearchResult}</List>
+              <form>
+                <Button variant="contained" type="submit">
+                  Add Portfolio
+                </Button>
+                <Button variant="contained" onClick={getCompanyData}>
+                  View Company
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={resetSearch}
+                >
+                  Close
+                </Button>
+              </form>
+            </div>
+          )}
         </Box>
       </Modal>
-      <Modal open={showCompany} onClose={resetCompanyData}>
-        <div>
+
+      {/* Display company overview after search feature */}
+      <Modal open={showCompany} onClose={handleCloseCompanyView}>
+        <div className="company-overview">
           <CompanyDetailsTemplate data={companyData} />
-          <Button variant="contained" onClick={resetCompanyData}>
-            Close
-          </Button>
+          <div className="company-overview-close-btn">
+            <Button
+              size="large"
+              variant="contained"
+              onClick={handleCloseCompanyView}
+            >
+              Close
+            </Button>
+          </div>
         </div>
       </Modal>
 
+      {/* Reduce or Delete portfolio feature */}
       <Modal open={showReduce || showDelete} onClose={resetPortfolio}>
         <Box sx={style} overflow={true}>
           <h2 className="reduce-delete-portfolio-title">
