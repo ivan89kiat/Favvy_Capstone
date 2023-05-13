@@ -196,8 +196,9 @@ export default function Investment() {
             setSelectedCompanyBE(e.target.value);
           }}
           selected={
+            selectedCompany !== "" &&
             Number(selectedCompany) ===
-            data.findIndex((object) => object.id === item.id)
+              data.findIndex((object) => object.id === item.id)
           }
         >
           Sym:{item.symbol} | Name: {item.name}
