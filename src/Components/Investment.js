@@ -19,10 +19,10 @@ import CompanyDetailsTemplate from "./CompanyDetailsTemplate";
 
 export default function Investment() {
   const [searchPortfolio, setSearchPortfolio] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   const [showCompany, setShowCompany] = useState(false);
   const [showReduce, setShowReduce] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [input, setInput] = useState("");
   const [jsonResults, setJsonResults] = useState([]);
   const [companyData, setCompanyData] = useState([]);
@@ -192,6 +192,7 @@ export default function Investment() {
                 `Are you sure you want to delete ${item.name} from your portfolio?`
               );
             }
+            setShowForm(true);
             setSelectedCompany(e.target.id);
             setSelectedCompanyBE(e.target.value);
           }}
@@ -204,7 +205,7 @@ export default function Investment() {
           Sym:{item.symbol} | Name: {item.name}
         </ListItemButton>
       ))
-    : null;
+    : "You have no portfolio";
 
   const resetPortfolio = () => {
     setSelectedCompany("");
@@ -376,66 +377,70 @@ export default function Investment() {
             {showReduce ? "Reduce Portfolio" : "Delete Portfolio"}
           </h2>
           <Divider sx={{ marginBottom: "10px" }} />
-          <form>
-            {/* {handleReducePortfolio} */}
-            {data ? displayUserPortfolio : "You have no portfolio"}
-            <Divider sx={{ marginBottom: "10px" }} />
-            <Typography color={showDelete ? "red" : "blue"}>
-              {showReduce &&
-                selectedCompany &&
-                `Name: ${data[selectedCompany].name}`}
-              {showDelete &&
-                selectedCompany &&
-                `Press Confirm to DELETE ${data[selectedCompany].name} from your portfolio`}
-            </Typography>
-            {selectedCompany && showReduce && (
-              <FormControl fullWidth>
-                <TextField
-                  className="reduce-units"
-                  label="Reduce Holdings (Units)"
-                  variant="outlined"
-                  value={units}
-                  margin="normal"
-                  inputProps={{ inputMode: "numeric" }}
-                  onChange={(e) => {
-                    let val = e.target.value;
-                    if (val.match(/[^0-9]/)) {
-                      return e.preventDefault();
-                    }
-                    setUnits(Number(val));
-                  }}
-                />
-                <TextField
-                  className="selling-price"
-                  label="Selling Price ($)"
-                  variant="outlined"
-                  value={price}
-                  type="number"
-                  margin="normal"
-                  inputProps={{
-                    pattern: "^[0-9]*\\.?[0-9]{0,2}$",
-                  }}
-                  onChange={(e) => {
-                    let val = e.target.value;
-                    if (/^\d*\.?\d{0,2}$/.test(val)) {
-                      setPrice(Number(val));
-                    }
-                  }}
-                />
-              </FormControl>
-            )}
-            <Divider sx={{ marginBottom: "10px" }} />
-            <Button variant="contained" type="submit">
-              Confirm
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={resetPortfolio}
-            >
-              Cancel
-            </Button>
-          </form>
+          <div>{displayUserPortfolio}</div>
+          {showForm ? (
+            <form>
+              {/* {handleReducePortfolio} */}
+              <Divider sx={{ marginBottom: "10px" }} />
+              <Typography color={showDelete ? "red" : "blue"}>
+                {data &&
+                  showReduce &&
+                  selectedCompany &&
+                  `Name: ${data[selectedCompany].name}`}
+                {data &&
+                  showDelete &&
+                  selectedCompany &&
+                  `Press Confirm to DELETE ${data[selectedCompany].name} from your portfolio`}
+              </Typography>
+              {selectedCompany && showReduce && (
+                <FormControl fullWidth>
+                  <TextField
+                    className="reduce-units"
+                    label="Reduce Holdings (Units)"
+                    variant="outlined"
+                    value={units}
+                    margin="normal"
+                    inputProps={{ inputMode: "numeric" }}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (val.match(/[^0-9]/)) {
+                        return e.preventDefault();
+                      }
+                      setUnits(Number(val));
+                    }}
+                  />
+                  <TextField
+                    className="selling-price"
+                    label="Selling Price ($)"
+                    variant="outlined"
+                    value={price}
+                    type="number"
+                    margin="normal"
+                    inputProps={{
+                      pattern: "^[0-9]*\\.?[0-9]{0,2}$",
+                    }}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (/^\d*\.?\d{0,2}$/.test(val)) {
+                        setPrice(Number(val));
+                      }
+                    }}
+                  />
+                </FormControl>
+              )}
+              <Divider sx={{ marginBottom: "10px" }} />
+              <Button variant="contained" type="submit">
+                Confirm
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={resetPortfolio}
+              >
+                Cancel
+              </Button>
+            </form>
+          ) : null}
         </Box>
       </Modal>
     </div>
