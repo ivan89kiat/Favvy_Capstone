@@ -1,12 +1,15 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { UserAuth } from "./UserContext";
 import axios from "axios";
 import { Modal, Button, Form } from "react-bootstrap";
 import "./Profile.css";
 import Calendar from "react-calendar";
+import { BACKEND_URL } from "./constant";
 
 export default function Profile() {
+  const { dbUser, accessToken } = UserAuth();
   const { isAuthenticated } = useAuth0();
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
@@ -21,20 +24,15 @@ export default function Profile() {
   const [estInflation, setEstInflation] = useState("");
   const [pLExpenses, setPLExpenses] = useState("");
   const [totalSum, setTotalSum] = useState("");
-  const [userData, setUser] = useState({
-    first_name: "ivan",
-    last_name: "khor",
-    mobile: "98765432",
-    email: "ivankhor@test.com",
-    dobirth: "Mon Aug 07 1989",
-  });
+  const [userData, setUserData] = useState([]);
+
   const [goal, setGoal] = useState({
     retirement_age: "65",
     target_expenses: "1000",
     est_inflation: "3",
   });
 
-  const displayProfile = (
+  const displayProfile = userData && (
     <div className="dashboard-section2">
       <div>First Name: {userData.first_name}</div>
       <div>Last Name: {userData.last_name}</div>
@@ -47,13 +45,7 @@ export default function Profile() {
   useEffect(() => {
     if (isAuthenticated) {
       calcProjectedLivingExpenses();
-      // axios
-      //   .get(`${process.env.BACKEND_URL}/profile`)
-      //   .then((res) => {
-      //     const { data } = res;
-      //     setUserData(data);
-      //   })
-      //   .catch((error) => alert(error.message));
+      retrieveProfile();
       // axios
       //   .get(`${process.env.BACKEND_URL}/goal/:userId`)
       //   .then((res) => {
@@ -66,29 +58,58 @@ export default function Profile() {
     } else {
       navigate("/");
     }
-  }, []);
+  }, [show]);
 
   const resetInputField = () => {
+    setShow(false);
     setFirstName("");
     setLastName("");
     setMobile("");
     setDoBirth("");
   };
 
-  // const handleSubmitProfile = async (e) => {
-  //   e.preventDefault();
-  //   await axios.put(
-  //     `${process.env.BACKEND_URL}/profile`,
-  //     {
-  //       first_name: firstName,
-  //       last_name: lastName,
-  //       mobile: mobile,
-  //       dobirth: doBirth,
-  //     },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
-  // resetInputField();
-  // };
+  const retrieveProfile = async () => {
+    await axios
+      .post(
+        `${BACKEND_URL}/profile`,
+        {
+          userEmail: dbUser.email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
+      .then((res) => {
+        const { data } = res;
+        setUserData(data[0]);
+        if (data[0].last_name === null) {
+          alert("Please Edit Your Profile");
+          setShow(true);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const handleSubmitProfile = async (e) => {
+    e.preventDefault();
+    await axios.put(
+      `${BACKEND_URL}/profile`,
+      {
+        first_name: firstName,
+        last_name: lastName,
+        mobile: mobile,
+        dobirth: doBirth,
+        userEmail: dbUser.email,
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    navigate("/profile");
+    resetInputField();
+  };
 
   const calcProjectedLivingExpenses = () => {
     const retirementAge = parseInt(goal.retirement_age);
@@ -164,8 +185,7 @@ export default function Profile() {
             <Modal.Title>Edit Profile</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Form>
-              {/* handleSubmitProfile */}
+            <Form onSubmit={handleSubmitProfile}>
               <Form.Group className="form-group">
                 <Form.Label className="compact-label">First Name:</Form.Label>
                 <Form.Control
@@ -202,7 +222,7 @@ export default function Profile() {
               <Form.Group className="form-group-email">
                 <Form.Label className="compact-label">Email:</Form.Label>
                 <Form.Control
-                  value={userData.email}
+                  value={userData && userData.email}
                   readOnly
                   className="field"
                 ></Form.Control>
@@ -226,16 +246,17 @@ export default function Profile() {
                   }}
                 />
               </Form.Group>
+              <Button className="primary-button" type="submit">
+                Save Changes
+              </Button>
+              <Button
+                className="secondary-button"
+                onClick={() => setShow(false)}
+              >
+                Cancel
+              </Button>{" "}
             </Form>
           </Modal.Body>
-          <Modal.Footer>
-            <Button className="primary-button" type="submit">
-              Save Changes
-            </Button>
-            <Button className="secondary-button" onClick={() => setShow(false)}>
-              Cancel
-            </Button>
-          </Modal.Footer>
         </Modal>
       </div>
 
