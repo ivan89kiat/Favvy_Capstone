@@ -26,8 +26,11 @@ import {
   Tooltip,
 } from "@mui/material";
 import axios from "axios";
+import { BACKEND_URL } from "./constant";
+import { UserAuth } from "./UserContext";
 
 export default function History() {
+  const { dbUser, accessToken } = UserAuth();
   const [transactionAmount, setTransactionAmount] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
@@ -37,67 +40,8 @@ export default function History() {
   const [showEdit, setShowEdit] = useState(false);
   const [incomeCategory, setIncomeCategory] = useState(false);
   const [availableBalance, setAvailableBalance] = useState(10000);
-  const [category, setCategory] = useState([
-    "Housing",
-    "Food",
-    "Utilities",
-    "Transportation",
-    "Clothing",
-    "Healthcare",
-    "Insurance",
-    "Household",
-    "Personal",
-    "Debt",
-    "Retirement",
-    "Education",
-    "Entertainment",
-    "Gifts",
-    "Miscellanous",
-  ]);
-
-  const data = [
-    {
-      id: 1,
-      amount: 1000,
-      type: "income",
-      date: "07/05/2023",
-    },
-    {
-      id: 2,
-      amount: 500.32,
-      type: "expenses",
-      category: "Housing",
-      date: "09/05/2023",
-    },
-    {
-      id: 4,
-      amount: 250,
-      type: "expenses",
-      category: "Transportation",
-      date: "11/05/2023",
-    },
-    {
-      id: 5,
-      amount: 100,
-      type: "expenses",
-      category: "Insurance",
-      date: "14/05/2023",
-    },
-    {
-      id: 6,
-      amount: 100,
-      type: "expenses",
-      category: "Entertainment",
-      date: "14/05/2023",
-    },
-    {
-      id: 7,
-      amount: 100,
-      type: "expenses",
-      category: "Personal",
-      date: "14/05/2023",
-    },
-  ];
+  const [category, setCategory] = useState([]);
+  const [historyData, setHistoryData] = useState([]);
 
   const style = {
     position: "absolute",
@@ -110,12 +54,31 @@ export default function History() {
     boxShadow: 24,
     p: 4,
   };
+
   useEffect(() => {
-    // axios
-    //   .get(`${process.env.BACKEND_URL}/balance/${userId}`)
-    //   .then((res) => setAvailableBalance(res.data))
-    //   .catch((error) => console.log(error.message));
-  });
+    axios
+      .get(`${BACKEND_URL}/budget`)
+      .then((res) => {
+        const { data } = res;
+        setCategory(data);
+      })
+      .catch((error) => console.log(error.message));
+  }, []);
+
+  useEffect(() => {
+    axios
+      .get(`${BACKEND_URL}/history/${dbUser.id}`)
+      .then((res) => {
+        setHistoryData(res.data);
+      })
+      .catch((error) => console.log(error.message));
+  }, [dbUser]);
+  console.log(dbUser);
+
+  // axios
+  //   .get(`${process.env.BACKEND_URL}/balance/${userId}`)
+  //   .then((res) => setAvailableBalance(res.data))
+  //   .catch((error) => console.log(error.message));
 
   const newAvailableBalance = () => {
     let newAvailableBalance = 0;
@@ -178,6 +141,7 @@ export default function History() {
   console.log("selectedCategoryId", selectedCategoryId);
   console.log("selectedType", selectedType);
   console.log("selectedTransactionId", selectedTransactionId);
+
   return (
     <div>
       <h2>Transaction History</h2>
@@ -215,37 +179,50 @@ export default function History() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {data.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell align="center">{row.category}</TableCell>
-                        <TableCell align="center">{row.type}</TableCell>
-                        <TableCell align="center">
-                          ${row.amount.toFixed(2).toLocaleString()}
-                        </TableCell>
-                        <TableCell align="center">{row.date}</TableCell>
-                        <TableCell align="center">
-                          <Button
-                            size="small"
-                            id={data.findIndex(
-                              (object) => object.id === row.id
-                            )}
-                            value={row.id}
-                            onClick={(e) => {
-                              setShowEdit(true);
-                              setSelectedCategory(data[e.target.id].category);
-                              setSelectedCategoryId(
-                                category.indexOf(data[e.target.id].category)
-                              );
-                              setSelectedTransactionId(e.target.value);
-                              setSelectedType(data[e.target.id].type);
-                              setTransactionAmount(data[e.target.id].amount);
-                            }}
-                          >
-                            EDIT
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {historyData &&
+                      historyData.map((row) => (
+                        <TableRow key={row.id}>
+                          <TableCell align="center">{row.category}</TableCell>
+                          <TableCell align="center">{row.type}</TableCell>
+                          <TableCell align="center">${row.amount}</TableCell>
+                          <TableCell align="center">{row.date}</TableCell>
+                          <TableCell align="center">
+                            <Button
+                              size="small"
+                              id={historyData.findIndex(
+                                (object) => object.id === row.id
+                              )}
+                              value={row.id}
+                              onClick={(e) => {
+                                setShowEdit(true);
+                                if (
+                                  historyData[e.target.id].category === null
+                                ) {
+                                  setSelectedCategory("");
+                                } else {
+                                  setSelectedCategory(
+                                    historyData[e.target.id].category
+                                  );
+                                }
+                                setSelectedCategoryId(
+                                  category.findIndex(
+                                    (object) =>
+                                      object.name ===
+                                      historyData[e.target.id].category
+                                  ) + 1
+                                );
+                                setSelectedTransactionId(e.target.value);
+                                setSelectedType(historyData[e.target.id].type);
+                                setTransactionAmount(
+                                  historyData[e.target.id].amount
+                                );
+                              }}
+                            >
+                              EDIT
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -270,12 +247,16 @@ export default function History() {
                         disabled={incomeCategory}
                         onChange={(e) => {
                           setSelectedCategory(e.target.value);
-                          setSelectedCategoryId(e.target.id);
                         }}
                       >
                         {category.map((item) => (
-                          <MenuItem value={item} key={item} id={item.id}>
-                            {item}
+                          <MenuItem
+                            value={item.name}
+                            key={item.id}
+                            id={item.id}
+                            onClick={(e) => setSelectedCategoryId(e.target.id)}
+                          >
+                            {item.name}
                           </MenuItem>
                         ))}
                       </Select>
