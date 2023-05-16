@@ -32,6 +32,7 @@ import { UserAuth } from "./UserContext";
 export default function History() {
   const { dbUser, accessToken } = UserAuth();
   const [transactionAmount, setTransactionAmount] = useState("");
+  const [editedTransactionAmount, setEditedTransactionAmount] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedTransactionId, setSelectedTransactionId] = useState("");
@@ -39,7 +40,8 @@ export default function History() {
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [incomeCategory, setIncomeCategory] = useState(false);
-  const [availableBalance, setAvailableBalance] = useState(10000);
+  const [availableBalance, setAvailableBalance] = useState("");
+  const [updatedBalance, setUpdatedBalance] = useState("");
   const [category, setCategory] = useState([]);
   const [historyData, setHistoryData] = useState([]);
 
@@ -72,61 +74,94 @@ export default function History() {
         setHistoryData(res.data);
       })
       .catch((error) => console.log(error.message));
+  }, [dbUser, availableBalance]);
+
+  useEffect(() => {
+    axios
+      .get(`${BACKEND_URL}/balance/${dbUser.id}`)
+      .then((res) => {
+        setAvailableBalance(res.data[0].amount);
+        setUpdatedBalance(res.data[0].amount);
+      })
+      .catch((error) => console.log(error.message));
   }, [dbUser]);
-  console.log(dbUser);
 
-  // axios
-  //   .get(`${process.env.BACKEND_URL}/balance/${userId}`)
-  //   .then((res) => setAvailableBalance(res.data))
-  //   .catch((error) => console.log(error.message));
+  useEffect(() => {
+    axios
+      .put(
+        `${BACKEND_URL}/balance/${dbUser.id}`,
+        { updatedBalance },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      )
+      .then((res) => {
+        setAvailableBalance(res.data[0].amount);
+      })
+      .catch((error) => console.log(error.message));
+  }, [updatedBalance]);
 
+  console.log(availableBalance);
   const newAvailableBalance = () => {
     let newAvailableBalance = 0;
     if (selectedType === "income") {
-      newAvailableBalance = transactionAmount + availableBalance;
-      setAvailableBalance(newAvailableBalance);
+      newAvailableBalance = editedTransactionAmount + Number(availableBalance);
+      setUpdatedBalance(newAvailableBalance);
     } else if (
       selectedType === "expenses" &&
-      availableBalance > transactionAmount
+      Number(availableBalance) > editedTransactionAmount
     ) {
-      newAvailableBalance = availableBalance - transactionAmount;
-      setAvailableBalance(newAvailableBalance);
+      newAvailableBalance = Number(availableBalance) - editedTransactionAmount;
+      setUpdatedBalance(newAvailableBalance);
     } else {
       alert("Transaction is invalid due to insufficient balance.");
     }
   };
 
-  // const handleTransactionEntry = async (e) => {
-  //   e.preventDefault();
-  //
-  //     await axios.post(
-  //       `${process.env.BACKEND_URL}/history/${userId}`,
-  //       {
-  //         transactionAmount,
-  //         selectedCategoryId,
-  //         selectedType,
-  //         date: new Date().toLocaleDateString(),
-  //       },
-  //       { headers: { Authorization: `Bearer ${accessToken}` } }
-  //     );
-  //
-  //   await axios.put(
-  //     `${process.env.BACKEND_URL}/balance/${userId}`,
-  //     { availableBalance },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
-  // };
+  const handleTransactionEntry = async (e) => {
+    e.preventDefault();
+    newAvailableBalance();
+    await axios.post(
+      `${BACKEND_URL}/history/${dbUser.id}`,
+      {
+        editedTransactionAmount,
+        selectedCategory,
+        selectedType,
+        date: new Date().toLocaleDateString(),
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    resetTransaction();
+  };
 
-  // const handleEditTransaction = async (e) => {
-  //   e.preventDefault();
+  const balanceAfterEdit = () => {
+    let newAvailableBalance = 0;
+    if (selectedType === "income") {
+      newAvailableBalance =
+        Number(availableBalance) - transactionAmount + editedTransactionAmount;
+      setUpdatedBalance(newAvailableBalance);
+    } else {
+      newAvailableBalance =
+        Number(availableBalance) + transactionAmount - editedTransactionAmount;
+      setUpdatedBalance(newAvailableBalance);
+    }
+  };
 
-  //   await axios.put(`${BACKEND_URL}/history`, {
-  //     amount: transactionAmount,
-  //     type: selectedType,
-  //     category_id: selectedCategoryId,
-  //     date: new Date().toLocaleDateString(),
-  //   });
-  // };
+  const handleEditTransaction = async (e) => {
+    e.preventDefault();
+    balanceAfterEdit();
+
+    await axios.put(
+      `${BACKEND_URL}/history`,
+      {
+        editedTransactionAmount,
+        selectedType,
+        selectedCategory,
+        date: new Date().toLocaleDateString(),
+        selectedTransactionId,
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    resetTransaction();
+  };
 
   const resetTransaction = () => {
     setShowEdit(false);
@@ -135,12 +170,38 @@ export default function History() {
     setSelectedCategoryId("");
     setSelectedTransactionId("");
     setSelectedType("");
+    setIncomeCategory(false);
   };
+
+  const balanceAfterDelete = () => {
+    let newAvailableBalance = 0;
+    if (selectedType === "income") {
+      newAvailableBalance = Number(availableBalance) - editedTransactionAmount;
+      setUpdatedBalance(newAvailableBalance);
+    } else {
+      newAvailableBalance = Number(availableBalance) + editedTransactionAmount;
+      setUpdatedBalance(newAvailableBalance);
+    }
+  };
+
+  const handleDeleteTransaction = async (e) => {
+    e.preventDefault();
+    balanceAfterDelete();
+
+    await axios.delete(`${BACKEND_URL}/history/${selectedTransactionId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    console.log("this is running");
+    setShowDelete(false);
+    resetTransaction();
+  };
+
   console.log("selectedCategory", selectedCategory);
   console.log("transactionAmount", transactionAmount);
   console.log("selectedCategoryId", selectedCategoryId);
   console.log("selectedType", selectedType);
   console.log("selectedTransactionId", selectedTransactionId);
+  console.log("editedTransactionAmount", editedTransactionAmount);
 
   return (
     <div>
@@ -157,7 +218,8 @@ export default function History() {
               <Card>
                 <CardContent>
                   <Typography variant="h6" align="left">
-                    Available Balance: ${availableBalance.toLocaleString()}
+                    Available Balance: $
+                    {Number(availableBalance).toLocaleString()}
                   </Typography>
                   <Divider sx={{ marginBottom: "3px" }} />
                 </CardContent>
@@ -199,6 +261,7 @@ export default function History() {
                                   historyData[e.target.id].category === null
                                 ) {
                                   setSelectedCategory("");
+                                  setIncomeCategory(true);
                                 } else {
                                   setSelectedCategory(
                                     historyData[e.target.id].category
@@ -214,7 +277,10 @@ export default function History() {
                                 setSelectedTransactionId(e.target.value);
                                 setSelectedType(historyData[e.target.id].type);
                                 setTransactionAmount(
-                                  historyData[e.target.id].amount
+                                  Number(historyData[e.target.id].amount)
+                                );
+                                setEditedTransactionAmount(
+                                  Number(historyData[e.target.id].amount)
                                 );
                               }}
                             >
@@ -233,8 +299,11 @@ export default function History() {
             <Paper>
               <Box>
                 <Typography>Transaction Entry</Typography>
-                <form>
-                  {/* showEdit ? handleEditTransaction : handleTransactionEntry */}
+                <form
+                  onSubmit={
+                    showEdit ? handleEditTransaction : handleTransactionEntry
+                  }
+                >
                   <Tooltip
                     title="category is only for expenses"
                     placement="top"
@@ -271,6 +340,8 @@ export default function History() {
                         if (e.target.value === "income") {
                           setSelectedCategory("");
                           setIncomeCategory(true);
+                        } else {
+                          setIncomeCategory(false);
                         }
                         setSelectedType(e.target.value);
                       }}
@@ -291,7 +362,7 @@ export default function History() {
                   <TextField
                     label="Transaction Amount ($)"
                     variant="outlined"
-                    value={transactionAmount}
+                    value={editedTransactionAmount}
                     type="number"
                     margin="normal"
                     fullWidth
@@ -302,7 +373,7 @@ export default function History() {
                     onChange={(e) => {
                       let val = e.target.value;
                       if (/^\d*\.?\d{0,2}$/.test(val)) {
-                        setTransactionAmount(Number(val));
+                        setEditedTransactionAmount(Number(val));
                       }
                     }}
                   />
@@ -339,18 +410,17 @@ export default function History() {
       </Paper>
       <Modal open={showDelete}>
         <Box sx={style}>
-          <form>
-            {/* handleSubmitDelete */}
-            <FormControl
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <Typography color="red">
-                Are you sure to delete the transaction?
-              </Typography>
+          <FormControl
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <Typography color="red">
+              Are you sure to delete the transaction?
+            </Typography>
+            <form onSubmit={handleDeleteTransaction}>
               <Button variant="contained" type="submit">
                 Confirm
               </Button>
@@ -360,9 +430,9 @@ export default function History() {
                 onClick={() => setShowDelete(false)}
               >
                 Cancel
-              </Button>
-            </FormControl>
-          </form>
+              </Button>{" "}
+            </form>
+          </FormControl>
         </Box>
       </Modal>
     </div>
