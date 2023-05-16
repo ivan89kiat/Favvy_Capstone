@@ -8,7 +8,6 @@ import {
   Divider,
   Table,
   CardContent,
-  Stack,
   TableContainer,
   TableBody,
   TableHead,
@@ -24,6 +23,7 @@ import {
   Button,
   Modal,
   TextField,
+  Tooltip,
 } from "@mui/material";
 import axios from "axios";
 
@@ -35,6 +35,7 @@ export default function History() {
   const [selectedType, setSelectedType] = useState("");
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [incomeCategory, setIncomeCategory] = useState(false);
   const [availableBalance, setAvailableBalance] = useState(10000);
   const [category, setCategory] = useState([
     "Housing",
@@ -134,21 +135,34 @@ export default function History() {
 
   // const handleTransactionEntry = async (e) => {
   //   e.preventDefault();
-  //   await axios.post(
-  //     `${process.env.BACKEND_URL}/history/${userId}`,
-  //     {
-  //       transactionAmount,
-  //       selectedCategoryId,
-  //       selectedType,
-  // date: new Date ().toLocaleDateString()
-  //     },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
+  //
+  //     await axios.post(
+  //       `${process.env.BACKEND_URL}/history/${userId}`,
+  //       {
+  //         transactionAmount,
+  //         selectedCategoryId,
+  //         selectedType,
+  //         date: new Date().toLocaleDateString(),
+  //       },
+  //       { headers: { Authorization: `Bearer ${accessToken}` } }
+  //     );
+  //
   //   await axios.put(
   //     `${process.env.BACKEND_URL}/balance/${userId}`,
   //     { availableBalance },
   //     { headers: { Authorization: `Bearer ${accessToken}` } }
   //   );
+  // };
+
+  // const handleEditTransaction = async (e) => {
+  //   e.preventDefault();
+
+  //   await axios.put(`${BACKEND_URL}/history`, {
+  //     amount: transactionAmount,
+  //     type: selectedType,
+  //     category_id: selectedCategoryId,
+  //     date: new Date().toLocaleDateString(),
+  //   });
   // };
 
   const resetTransaction = () => {
@@ -244,29 +258,41 @@ export default function History() {
                 <Typography>Transaction Entry</Typography>
                 <form>
                   {/* showEdit ? handleEditTransaction : handleTransactionEntry */}
-                  <FormControl fullWidth>
-                    <InputLabel>Category</InputLabel>
-                    <Select
-                      label="Category"
-                      value={selectedCategory}
-                      onChange={(e) => {
-                        setSelectedCategory(e.target.value);
-                        setSelectedCategoryId(e.target.id);
-                      }}
-                    >
-                      {category.map((item) => (
-                        <MenuItem value={item} key={item} id={item.id}>
-                          {item}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <Tooltip
+                    title="category is only for expenses"
+                    placement="top"
+                  >
+                    <FormControl fullWidth>
+                      <InputLabel>Category</InputLabel>
+                      <Select
+                        label="Category"
+                        value={selectedCategory}
+                        disabled={incomeCategory}
+                        onChange={(e) => {
+                          setSelectedCategory(e.target.value);
+                          setSelectedCategoryId(e.target.id);
+                        }}
+                      >
+                        {category.map((item) => (
+                          <MenuItem value={item} key={item} id={item.id}>
+                            {item}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Tooltip>
                   <FormControl component="fieldset">
                     <RadioGroup
                       aria-label="transaction-type"
                       name="transaction-type"
                       value={selectedType}
-                      onChange={(e) => setSelectedType(e.target.value)}
+                      onChange={(e) => {
+                        if (e.target.value === "income") {
+                          setSelectedCategory("");
+                          setIncomeCategory(true);
+                        }
+                        setSelectedType(e.target.value);
+                      }}
                       row
                     >
                       <FormControlLabel
