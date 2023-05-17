@@ -22,8 +22,11 @@ import {
   FormControl,
 } from "@mui/material";
 import axios from "axios";
+import { BACKEND_URL } from "./constant";
+import { UserAuth } from "./UserContext";
 
 export default function DebtManagement() {
+  const { dbUser, accessToken } = UserAuth();
   const [loanAmount, setLoanAmount] = useState(0);
   const [loanTerm, setLoanTerm] = useState(0);
   const [interestRate, setInterestRate] = useState(0);
@@ -32,20 +35,13 @@ export default function DebtManagement() {
   const [totalInterest, setTotalInterest] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [showLoanForm, setShowLoanForm] = useState(false);
+  const [edit, setEdit] = useState(false);
   const [title, setTitle] = useState("");
   const [totalLiabilities, setTotalLiabilities] = useState(0);
   const [showDelete, setShowDelete] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState("");
-  const [data, setData] = useState([
-    { id: 1, title: "Housing", amount: 150000, interest: 2.5, tenure: 120 },
-    {
-      id: 2,
-      title: "Personal Loan",
-      amount: 12000,
-      interest: 7.56,
-      tenure: 50,
-    },
-  ]);
+  const [selectedLoanId, setSelectedLoanId] = useState("");
+  const [data, setData] = useState([]);
 
   const style = {
     position: "absolute",
@@ -60,8 +56,13 @@ export default function DebtManagement() {
   };
 
   useEffect(() => {
+    axios.get(`${BACKEND_URL}/loan/${dbUser.id}`).then((res) => {
+      const { data } = res;
+      console.log(data);
+      setData(data);
+    });
     calcCurrentLiabilities();
-  }, []);
+  }, [showLoanForm, showDelete]);
 
   const calculateEMI = () => {
     if (loanAmount === 0 || loanTerm === 0 || interestRate === 0) {
@@ -84,23 +85,36 @@ export default function DebtManagement() {
 
   const resetLoanForm = () => {
     setShowLoanForm(false);
+    setShowResult(false);
+    setEdit(false);
     setTitle("");
+    setTotalAmount(0);
+    setTotalInterest(0);
+    setInterestRate(0);
+    setEMI(0);
   };
 
-  // const handleSubmitLoanForm = async (e) => {
-  //   e.preventDefault();
-  //   await axios.post(`${process.env.BACKEND_URL}/loan`, {
-  //     title,
-  //     loanAmount,
-  //     loanTerm,
-  //     totalAmount,
-  //   });
-  // };
+  const handleSubmitLoanForm = async (e) => {
+    e.preventDefault();
+    await axios.post(
+      `${BACKEND_URL}/loan/${dbUser.id}`,
+      {
+        title,
+        interestRate,
+        loanTerm,
+        totalAmount,
+      },
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    resetLoanForm();
+  };
 
   const calcCurrentLiabilities = () => {
     let sum = 0;
     for (let i = 0; i < data.length; i++) {
-      sum += data[i].amount;
+      sum += Number(data[i].amount);
     }
     setTotalLiabilities(sum);
   };
@@ -115,6 +129,7 @@ export default function DebtManagement() {
               `Are you sure you want to delete ${item.title} from your portfolio?`
             );
             setSelectedLoan(e.target.id);
+            setSelectedLoanId(data[e.target.id].id);
           }}
           selected={
             selectedLoan !== "" &&
@@ -130,6 +145,15 @@ export default function DebtManagement() {
   const resetRemoveLoan = () => {
     setShowDelete(false);
     setSelectedLoan("");
+    setSelectedLoanId("");
+  };
+
+  const handleRemoveLoan = async (e) => {
+    e.preventDefault();
+    await axios.delete(`${BACKEND_URL}/loan/${selectedLoanId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    resetRemoveLoan();
   };
 
   return (
@@ -179,9 +203,7 @@ export default function DebtManagement() {
                         <TableCell align="center">
                           {row.amount.toLocaleString()}
                         </TableCell>
-                        <TableCell align="center">
-                          {row.interest.toFixed(2)}
-                        </TableCell>
+                        <TableCell align="center">{row.interest}</TableCell>
                         <TableCell align="center">{row.tenure}</TableCell>
                       </TableRow>
                     ))}
@@ -195,64 +217,77 @@ export default function DebtManagement() {
             <Paper>
               <Box>
                 <Typography>Loan Calculator</Typography>
-                <TextField
-                  label="Loan Amount ($)"
-                  variant="outlined"
-                  value={loanAmount}
-                  margin="normal"
-                  fullWidth
-                  inputProps={{ inputMode: "numeric" }}
-                  disabled={showResult}
-                  onChange={(e) => {
-                    let val = e.target.value;
-                    if (val.match(/[^0-9]/)) {
-                      return e.preventDefault();
-                    }
-                    setLoanAmount(Number(val));
-                  }}
-                />
-                <TextField
-                  label="Loan Term (months)"
-                  variant="outlined"
-                  value={loanTerm}
-                  margin="normal"
-                  fullWidth
-                  inputProps={{ inputMode: "numeric" }}
-                  disabled={showResult}
-                  onChange={(e) => {
-                    let val = e.target.value;
-                    if (val.match(/[^0-9]/)) {
-                      return e.preventDefault();
-                    }
-                    setLoanTerm(Number(val));
-                  }}
-                />
-                <Tooltip
-                  title="Please use Effective Interest Rate for better accuracy"
-                  placement="top"
-                >
+                <form>
                   <TextField
-                    label="Interest Rate (%)"
+                    label="Loan Amount ($)"
                     variant="outlined"
-                    value={interestRate}
-                    type="number"
+                    value={loanAmount}
                     margin="normal"
                     fullWidth
-                    inputProps={{
-                      pattern: "^[0-9]*\\.?[0-9]{0,2}$",
-                    }}
+                    inputProps={{ inputMode: "numeric" }}
                     disabled={showResult}
                     onChange={(e) => {
                       let val = e.target.value;
-                      if (/^\d*\.?\d{0,2}$/.test(val)) {
-                        setInterestRate(Number(val));
+                      if (val.match(/[^0-9]/)) {
+                        return e.preventDefault();
                       }
+                      setLoanAmount(Number(val));
                     }}
                   />
-                </Tooltip>
-                <Button variant="contained" onClick={calculateEMI}>
-                  Calculate
-                </Button>
+                  <TextField
+                    label="Loan Term (months)"
+                    variant="outlined"
+                    value={loanTerm}
+                    margin="normal"
+                    fullWidth
+                    inputProps={{ inputMode: "numeric" }}
+                    disabled={showResult}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (val.match(/[^0-9]/)) {
+                        return e.preventDefault();
+                      }
+                      setLoanTerm(Number(val));
+                    }}
+                  />
+                  <Tooltip
+                    title="Please use Effective Interest Rate for better accuracy"
+                    placement="top"
+                  >
+                    <TextField
+                      label="Interest Rate (%)"
+                      variant="outlined"
+                      value={interestRate}
+                      type="number"
+                      margin="normal"
+                      fullWidth
+                      inputProps={{
+                        pattern: "^[0-9]*\\.?[0-9]{0,2}$",
+                      }}
+                      disabled={showResult}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (/^\d*\.?\d{0,2}$/.test(val)) {
+                          setInterestRate(Number(val));
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                  {edit ? (
+                    <div>
+                      <Button variant="contained" type="submit">
+                        Edit Loan
+                      </Button>
+                      <Button variant="contained" onClick={calculateEMI}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button variant="contained" onClick={calculateEMI}>
+                      Calculate
+                    </Button>
+                  )}
+                </form>
               </Box>
               {showResult && (
                 <div>
@@ -292,8 +327,7 @@ export default function DebtManagement() {
       </Paper>
       <Modal open={showLoanForm}>
         <Box sx={style}>
-          <form>
-            {/* handleSubmitLoanForm */}
+          <form onSubmit={handleSubmitLoanForm}>
             <FormControl fullWidth>
               <Typography>Add Loan Title:</Typography>
               <Divider sx={{ marginBottom: "8px" }} />
@@ -322,8 +356,7 @@ export default function DebtManagement() {
         <Box sx={style} overflow={true}>
           <h2 className="delete-loan-title">Remove Loan</h2>
           <Divider sx={{ marginBottom: "10px" }} />
-          <form>
-            {/* {handleRemoveLoan} */}
+          <form onSubmit={handleRemoveLoan}>
             {data ? displayUserLoan : "You have no loan"}
             <Divider sx={{ marginBottom: "10px" }} />
             <Typography color="red">
