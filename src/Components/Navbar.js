@@ -4,7 +4,6 @@ import "./Navbar.css";
 import logo from "../logo.png";
 import { useAuth0 } from "@auth0/auth0-react";
 import LogoutButton from "./LogoutButton";
-import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import AccountBoxOutlinedIcon from "@mui/icons-material/AccountBoxOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import WalletOutlinedIcon from "@mui/icons-material/WalletOutlined";
