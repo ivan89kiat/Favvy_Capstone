@@ -18,132 +18,158 @@ import {
   Paper,
   Box,
 } from "@mui/material";
+import { BACKEND_URL } from "./constant";
+import { UserAuth } from "./UserContext";
 
 export default function Budget() {
+  const { dbUser, accessToken } = UserAuth();
   const { isAuthenticated } = useAuth0();
   const [show, setShow] = useState(false);
   const [edit, setEdit] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState(false);
   const [budgetId, setBudgetId] = useState("");
   const [balance, setBalance] = useState("");
-  const [amount, setAmount] = useState("");
-  const [newCategory, setNewCategory] = useState([]);
+  const [updateBalance, setUpdateBalance] = useState("");
+  const [spending, setSpending] = useState("");
+  const [amount, setAmount] = useState(0);
+  const [totalSpending, setTotalSpending] = useState([]);
+  const [filteredCategory, setFilteredCategory] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [category, setCategory] = useState([
-    "Housing",
-    "Food",
-    "Utilities",
-    "Transportation",
-    "Clothing",
-    "Healthcare",
-    "Insurance",
-    "Household",
-    "Personal",
-    "Debt",
-    "Retirement",
-    "Education",
-    "Entertainment",
-    "Gifts",
-    "Miscellanous",
-  ]);
-
-  const budgetData = [
-    { id: 0, name: "Food", amount: 1000, spending: 500, balance: 500 },
-    {
-      id: 1,
-      name: "Transportation",
-      amount: 300,
-      spending: 100,
-      balance: 200,
-    },
-    {
-      id: 2,
-      name: "Entertainment",
-      amount: 300,
-      spending: 150,
-      balance: 150,
-    },
-    { id: 3, name: "Household", amount: 300, spending: 150, balance: 150 },
-    { id: 4, name: "Housing", amount: 600, spending: 600, balance: 0 },
-  ];
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [category, setCategory] = useState([]);
+  const [budgetData, setBudgetData] = useState([]);
 
   useEffect(() => {
-    // axios.get(`${process.env.BACKEND_URL}/budgets/${userId}`, {
-    //   headers: { Authorization: `Bearer ${accessToken}` },
-    // });
+    axios
+      .get(`${BACKEND_URL}/budget`)
+      .then((res) => {
+        const { data } = res;
+        setCategory(data);
+      })
+      .catch((error) => console.log(error.message));
+
+    axios
+      .get(`${BACKEND_URL}/history/${dbUser.id}`)
+      .then((res) => {
+        const { data } = res;
+        const spendingByCategory = data.reduce((acc, transaction) => {
+          const { category, amount } = transaction;
+          if (acc[category]) {
+            acc[category] += Number(amount);
+          } else {
+            acc[category] = Number(amount);
+          }
+          return acc;
+        }, {});
+        setTotalSpending(spendingByCategory);
+      })
+      .catch((error) => console.log(error.message));
+
+    axios
+      .get(`${BACKEND_URL}/budget/${dbUser.id}`)
+      .then((res) => {
+        const { data } = res;
+        setBudgetData(data);
+      })
+      .catch((error) => console.log(error.message));
+  }, [dbUser, edit, show]);
+
+  useEffect(() => {
     calcBudgetBalance();
-    filteredCategory();
-  }, []);
+    filterCategory();
+  }, [budgetData]);
+
+  const updatedBudgetData =
+    budgetData &&
+    budgetData.map((budget) => {
+      const categoryName =
+        category[
+          category.findIndex((object) => object.id === budget.budgetCategory_id)
+        ].name;
+      const categorySpending = totalSpending[categoryName] || 0;
+      const categoryBalance = budget.amount - totalSpending[categoryName] || 0;
+      return {
+        ...budget,
+        spending: categorySpending,
+        name: categoryName,
+        remainingBalance: categoryBalance,
+      };
+    });
 
   const calcBudgetBalance = () => {
     let sum = 0;
 
-    for (let i = 0; i < budgetData.length; i++) {
-      sum += budgetData[i].balance;
+    for (let i = 0; i < updatedBudgetData.length; i++) {
+      sum += Number(updatedBudgetData[i].remainingBalance);
     }
-    return setBalance(sum);
+    return setBalance(sum.toFixed(2));
   };
 
-  const filteredCategory = () => {
-    let j = 0;
-    while (j < budgetData.length) {
-      for (let k = 0; k < category.length; k++) {
-        if (category[k] === budgetData[j].name) {
-          category.splice([k], 1);
-        }
-      }
-      j++;
+  const filterCategory = () => {
+    let newCategory = [...category];
+
+    for (let i = 0; i < updatedBudgetData.length; i++) {
+      const categoryId = updatedBudgetData[i].budgetCategory_id;
+      newCategory = newCategory.filter((cat) => cat.id !== categoryId);
     }
+    setFilteredCategory(newCategory);
   };
 
-  const descendedBudget = budgetData.sort((a, b) => b.amount - a.amount);
+  const descendedBudget = updatedBudgetData.sort((a, b) => b.amount - a.amount);
 
-  const budgetStatus = budgetData.amount / budgetData.spending;
+  const handleCreateBudget = async (e) => {
+    e.preventDefault();
+    await axios.post(
+      `${BACKEND_URL}/budget/${dbUser.id}`,
+      {
+        selectedCategoryId,
+        amount,
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    resetCreate();
+    console.log("create is running completed");
+  };
 
-  // const handleSubmitBudget = async () => {
-  // e.preventDefault();
-  //   await axios.post(
-  //     `${process.env.BACKEND_URL}/budget/:userId`,
-  //     {
-  //       name: selectedCategory,
-  //       amount: amount,
-  //     },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
-  // };
+  const handleEditBudget = async (e) => {
+    e.preventDefault();
+    const newBalance = amount - updateBalance;
+    await axios.put(
+      `${BACKEND_URL}/budget/${dbUser.id}`,
+      {
+        budgetId,
+        amount,
+        newBalance,
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    resetEdit();
+  };
 
-  // const handleEditBudget = async (e) =>{
-  // e.preventDefault();
-  //   await axios.put(
-  //     `${process.env.BACKEND_URL}/budget/:userId`,
-  //     {id: budgetId,
-  //       name: selectedCategory,
-  //       amount: amount,
-  //     },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
-  // };
-
-  // const handleDeleteBudget = async () =>{
-  // e.preventDefault();
-  //   await axios.delete(
-  //     `${process.env.BACKEND_URL}/budget/:userId`,
-  //     {id: budgetId,
-  //     },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
-  // };
+  const handleDeleteBudget = async (e) => {
+    e.preventDefault();
+    await axios.delete(
+      `${BACKEND_URL}/budget/${dbUser.id}/${budgetId}/${selectedCategory}/${spending}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    resetEdit();
+  };
 
   const resetEdit = () => {
+    setShow(false);
     setEdit(false);
     setSelectedCategory("");
+    setSelectedCategoryId("");
     setBudgetId("");
     setAmount(0);
+    setUpdateBalance("");
+    setDeleteStatus(false);
   };
 
-  const resetAddBudget = () => {
+  const resetCreate = () => {
     setShow(false);
     setSelectedCategory("");
+    setSelectedCategoryId("");
     setAmount(0);
   };
 
@@ -155,7 +181,6 @@ export default function Budget() {
     setAmount(Number(val));
   };
 
-  console.log(budgetId);
   return (
     <div>
       <div className="budget-section-1">
@@ -169,27 +194,15 @@ export default function Budget() {
           >
             Add
           </button>
-          <Modal
-            show={show}
-            onHide={() => setShow(false)}
-            backdrop="static"
-            centered
-          >
-            <button
-              type="button"
-              className="btn-close"
-              data-dismiss="modal"
-              aria-label="Close"
-              onClick={resetAddBudget}
-            >
+          <Modal show={show} backdrop="static" centered>
+            <button type="button" className="btn-close" onClick={resetEdit}>
               <span aria-hidden="true">&times;</span>
             </button>
             <Modal.Header>
               <Modal.Title>Add Budget</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Form>
-                {/* {handleSubmitBudget} */}
+              <Form onSubmit={handleCreateBudget}>
                 <Box sx={{ minWidth: 120 }}>
                   <FormControl fullWidth>
                     <InputLabel className="budget-category-selection-label">
@@ -203,9 +216,13 @@ export default function Budget() {
                         setSelectedCategory(e.target.value);
                       }}
                     >
-                      {category.map((item) => (
-                        <MenuItem value={item} key={item}>
-                          {item}
+                      {filteredCategory.map((item) => (
+                        <MenuItem
+                          value={item.name}
+                          key={item.id}
+                          onClick={() => setSelectedCategoryId(item.id)}
+                        >
+                          {item.name}
                         </MenuItem>
                       ))}
                     </Select>
@@ -228,7 +245,7 @@ export default function Budget() {
                   <Button
                     variant="contained"
                     color="secondary"
-                    onClick={resetAddBudget}
+                    onClick={resetCreate}
                   >
                     Cancel
                   </Button>
@@ -250,57 +267,69 @@ export default function Budget() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {descendedBudget.map((budget) => (
-                  <TableRow
-                    key={budget.name}
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {budget.name}
-                    </TableCell>
-                    <TableCell align="center">$ {budget.amount}</TableCell>
-                    <TableCell align="center">$ {budget.spending}</TableCell>
-                    <TableCell align="center">$ {budget.balance}</TableCell>
-                    <TableCell align="center">
-                      <Button
-                        size="small"
-                        id={budget.id}
-                        value={budget.name}
-                        onClick={(e) => {
-                          setEdit(true);
-                          setSelectedCategory(e.target.value);
-                          setBudgetId(e.target.id);
-                        }}
-                      >
-                        EDIT
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {updatedBudgetData &&
+                  descendedBudget.map((budget) => (
+                    <TableRow
+                      key={budget.name}
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {budget.name}
+                      </TableCell>
+                      <TableCell align="center">$ {budget.amount}</TableCell>
+                      <TableCell align="center">$ {budget.spending}</TableCell>
+                      <TableCell align="center">
+                        $ {budget.remainingBalance}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          size="small"
+                          id={budget.id}
+                          value={budget.name}
+                          onClick={(e) => {
+                            setEdit(true);
+                            setUpdateBalance(
+                              updatedBudgetData[
+                                updatedBudgetData.findIndex(
+                                  (object) => object.id === Number(e.target.id)
+                                )
+                              ].remainingBalance
+                            );
+                            setSelectedCategory(e.target.value);
+                            setSpending(
+                              updatedBudgetData[
+                                updatedBudgetData.findIndex(
+                                  (object) => object.id === Number(e.target.id)
+                                )
+                              ].spending
+                            );
+                            setSelectedCategoryId(
+                              updatedBudgetData[
+                                updatedBudgetData.findIndex(
+                                  (object) => object.id === Number(e.target.id)
+                                )
+                              ].budgetCategory_id
+                            );
+                            setBudgetId(e.target.id);
+                          }}
+                        >
+                          EDIT
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
-          <Modal
-            show={edit}
-            onHide={() => setEdit(false)}
-            backdrop="static"
-            centered
-          >
-            <button
-              type="button"
-              className="btn-close"
-              data-dismiss="modal"
-              aria-label="Close"
-              onClick={resetEdit}
-            >
+          <Modal show={edit} backdrop="static" centered>
+            <button type="button" className="btn-close" onClick={resetEdit}>
               <span aria-hidden="true">&times;</span>
             </button>
             <Modal.Header>
               <Modal.Title>Edit Budget</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Form>
-                {/* {handleSubmitEditBudget} */}
+              <Form onSubmit={handleEditBudget}>
                 <Box sx={{ minWidth: 120 }}>
                   <FormControl fullWidth>
                     <TextField
@@ -348,31 +377,19 @@ export default function Budget() {
               </Form>{" "}
             </Modal.Body>
           </Modal>
-          <Modal
-            show={deleteStatus}
-            onHide={() => setDeleteStatus(false)}
-            backdrop="static"
-            centered
-          >
+          <Modal show={deleteStatus} backdrop="static" centered>
             <Modal.Header>
               <Modal.Title>Delete Budget</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              Are you sure you want to delete this budget?
-              <Form>
-                {/* {handleSubmitDeleteBudget} */}
+              Are you sure to delete this budget? Transaction history related to
+              this budget will be deleted.
+              <Form onSubmit={handleDeleteBudget}>
                 <FormControl>
                   <Button variant="contained" type="submit" color="error">
                     Delete
                   </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      setDeleteStatus(false);
-                      setSelectedCategory("");
-                      setBudgetId("");
-                    }}
-                  >
+                  <Button variant="contained" onClick={resetEdit}>
                     Cancel
                   </Button>
                 </FormControl>
