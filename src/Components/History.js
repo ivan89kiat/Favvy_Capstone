@@ -126,6 +126,7 @@ export default function History() {
         selectedCategory,
         selectedType,
         date: new Date().toLocaleDateString(),
+        selectedCategoryId,
       },
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
@@ -171,6 +172,7 @@ export default function History() {
     setSelectedTransactionId("");
     setSelectedType("");
     setIncomeCategory(false);
+    setEditedTransactionAmount("");
   };
 
   const balanceAfterDelete = () => {
