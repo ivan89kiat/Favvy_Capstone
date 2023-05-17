@@ -13,14 +13,18 @@ import {
   Divider,
 } from "@mui/material";
 import axios from "axios";
+import { UserAuth } from "./UserContext";
 
 import "./Investment.css";
 import CompanyDetailsTemplate from "./CompanyDetailsTemplate";
+import { BACKEND_URL } from "./constant";
 
 export default function Investment() {
+  const { dbUser, accessToken } = UserAuth();
   const [searchPortfolio, setSearchPortfolio] = useState(false);
   const [showCompany, setShowCompany] = useState(false);
   const [showReduce, setShowReduce] = useState(false);
+  const [showIncrease, setShowIncrease] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [input, setInput] = useState("");
@@ -30,67 +34,46 @@ export default function Investment() {
   const [selectedCompanyBE, setSelectedCompanyBE] = useState("");
   const [units, setUnits] = useState(0);
   const [price, setPrice] = useState(0);
-  const [data, setData] = useState([]);
+  const [jsonData, setJsonData] = useState([]);
 
   useEffect(() => {
-    setData(jsonData);
-    // axios.get(`${process.env.BACKEND_URL}/investment`, {
-    //   headers: { Authorization: `Bearer ${accessToken}` },
-    // });
-  }, []);
-
-  const jsonData = [
-    {
-      id: 1,
-      date: "09 May 2023",
-      symbol: "IBM",
-      name: "International Business Machines",
-      open: 121.9,
-      close: 121.17,
-      purchasePrice: 102.85,
-      units: 5000,
-    },
-    {
-      id: 2,
-      date: "09 May 2023",
-      symbol: "IBM",
-      name: "International Business Machines",
-      open: 121.9,
-      close: 121.17,
-      purchasePrice: 102.85,
-      units: 5000,
-    },
-    {
-      id: 10,
-      date: "09 May 2023",
-      symbol: "APLE",
-      name: "International Business Machines",
-      open: 121.9,
-      close: 121.17,
-      purchasePrice: 102.85,
-      units: 5000,
-    },
-  ];
+    axios
+      .get(`${BACKEND_URL}/investment/${dbUser.id}`)
+      .then((res) => {
+        const { data } = res;
+        setJsonData(data);
+      })
+      .catch((error) => console.log(error.message));
+  }, [selectedCompanyBE]);
 
   const columns = [
-    { field: "symbol", headerName: "Symbol", width: 80, align: "center" },
+    {
+      field: "symbol",
+      headerName: "Symbol",
+      width: 80,
+      align: "center",
+      sortable: false,
+    },
     {
       field: "open",
       headerName: "Open Price ($)",
       width: 120,
       align: "center",
+      sortable: false,
     },
     {
       field: "close",
       headerName: "Close Price ($)",
       width: 120,
       align: "center",
+      sortable: false,
     },
     {
       field: "purchasePrice",
       headerName: "Average Price ($)",
       width: 130,
       align: "center",
+      sortable: false,
     },
     {
       field: "units",
@@ -103,19 +86,47 @@ export default function Investment() {
       headerName: "Last Update",
       width: 110,
       align: "center",
+      sortable: false,
     },
     {
       field: "totalCurrentValue",
       headerName: "Total Current Value ($)",
       description: "This column calculates the total current value",
-      sortable: false,
+      sortable: true,
       width: 180,
-      valueGetter: (params) => `${params.row.close * params.row.units}`,
+      valueGetter: (params) =>
+        `${Number(params.row.close * params.row.units).toFixed(2)}`,
+      align: "center",
+    },
+    {
+      field: "performance",
+      headerName: "Performance (%)",
+      description: "This column calculates the yield performance",
+      sortable: true,
+      width: 140,
+      valueGetter: (params) =>
+        `${
+          params.row.purchasePrice > 0
+            ? Number(
+                (params.row.close / params.row.purchasePrice) * 100 - 100
+              ).toFixed(1)
+            : "NA"
+        }`,
       align: "center",
     },
   ];
 
-  const rows = data;
+  const rows =
+    jsonData &&
+    jsonData.map((portfolio) => ({
+      id: portfolio.id,
+      symbol: portfolio.stockData.symbol,
+      open: portfolio.stockData.open,
+      close: portfolio.stockData.close,
+      purchasePrice: portfolio.purchasePrice,
+      units: portfolio.units,
+      date: portfolio.stockData.date,
+    }));
 
   const style = {
     position: "absolute",
@@ -162,7 +173,6 @@ export default function Investment() {
     ));
 
   const resetCompanyData = () => {
-    setJsonResults([]);
     setShowCompany(false);
     setCompanyData([]);
     setSelectedCompany("");
@@ -180,29 +190,29 @@ export default function Investment() {
     setShowCompany(true);
   };
 
-  const displayUserPortfolio = data
-    ? data.map((item) => (
+  const displayUserPortfolio = jsonData
+    ? jsonData.map((item) => (
         <ListItemButton
           key={item.id}
-          id={data.findIndex((object) => object.id === item.id)}
+          id={jsonData.findIndex((object) => object.id === item.id)}
           value={item.id}
           onClick={(e) => {
             if (showDelete) {
               alert(
-                `Are you sure you want to delete ${item.name} from your portfolio?`
+                `Are you sure you want to delete ${item.stockData.symbol} from your portfolio?`
               );
             }
             setShowForm(true);
             setSelectedCompany(e.target.id);
-            setSelectedCompanyBE(e.target.value);
+            setSelectedCompanyBE(jsonData[e.target.id].id);
           }}
           selected={
             selectedCompany !== "" &&
             Number(selectedCompany) ===
-              data.findIndex((object) => object.id === item.id)
+              jsonData.findIndex((object) => object.id === item.id)
           }
         >
-          Sym:{item.symbol} | Name: {item.name}
+          Sym:{item.stockData.symbol}
         </ListItemButton>
       ))
     : "You have no portfolio";
@@ -214,65 +224,67 @@ export default function Investment() {
     setSelectedCompanyBE("");
     setShowDelete(false);
     setShowReduce(false);
+    setShowIncrease(false);
   };
 
-  // const handleReducePortfolio = async (e) => {
-  //   e.preventDefault();
-  //   const updatedUnits = data[selectedCompany].units - units;
-  //   const totalSales = units * price;
-  //   await axios.put(
-  //     `${process.env.BACKEND_URL}/investment/${selectedCompanyBE}`,
-  //     {
-  //       units: updatedUnits,
-  //     },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
+  const handleReducePortfolio = async (e) => {
+    e.preventDefault();
+    const updatedUnits = jsonData[selectedCompany].units - units;
+    const totalSales = units * price;
+    const totalInvested = 0;
 
-  //   await axios.put(
-  //     `${process.env.BACKEND_URL}/balance`,
-  //     {
-  //       totalSales,
-  //     },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
-  //   resetPortfolio();
-  // };
+    await axios.put(
+      `${BACKEND_URL}/investment/${dbUser.id}/${selectedCompanyBE}`,
+      {
+        updatedUnits,
+        totalSales,
+        totalInvested,
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    console.log("this is running");
+    resetPortfolio();
+  };
 
-  // const handleDeletePortfolio = async (e) => {
-  //   e.preventDefault();
-  //   if (data[selectedCompany].units !== 0) {
-  //     alert(`Please clear off your holdings of ${data[selectedCompany].name}`);
-  //   } else
-  //     await axios.put(
-  //       `${process.env.BACKEND_URL}/investment/${selectedCompanyBE}`,
-  //       {
-  //         units: updatedUnits,
-  //       },
-  //       { headers: { Authorization: `Bearer ${accessToken}` } }
-  //     );
+  const handleIncreasePortfolio = async (e) => {
+    e.preventDefault();
+    const updatedUnits = jsonData[selectedCompany].units + units;
+    const totalSales = 0;
+    const totalInvested = units * price;
+    await axios.put(
+      `${BACKEND_URL}/investment/${dbUser.id}/${selectedCompanyBE}`,
+      {
+        updatedUnits,
+        totalSales,
+        totalInvested,
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
 
-  //   await axios.put(
-  //     `${process.env.BACKEND_URL}/balance`,
-  //     {
-  //       totalSales,
-  //     },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
-  //   resetPortfolio();
-  // };
+    resetPortfolio();
+  };
 
-  // const handleAddPortfolio = async (e) => {
-  //   e.preventDefault();
-  //   axios.post(
-  //     `${process.env.BACKEND_URL}/investment`,
-  //     { selectedCompany },
-  //     { headers: { Authorization: `Bearer ${accessToken}` } }
-  //   );
-  //   resetPortfolio();
-  // };
+  const handleDeletePortfolio = async (e) => {
+    e.preventDefault();
+    if (jsonData[selectedCompany].units !== 0) {
+      alert(
+        `Please clear off your holdings of ${jsonData[selectedCompany].symbol}`
+      );
+    } else
+      await axios.delete(`${BACKEND_URL}/investment/${selectedCompanyBE}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    resetPortfolio();
+  };
 
-  const handleCloseCompanyView = () => {
-    setShowCompany(false);
+  const handleAddPortfolio = async (e) => {
+    e.preventDefault();
+    axios.post(
+      `${BACKEND_URL}/investment/${dbUser.id}`,
+      { selectedCompany },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    resetPortfolio();
   };
 
   return (
@@ -289,10 +301,13 @@ export default function Investment() {
           <Button size="small" onClick={() => setShowReduce(true)}>
             Reduce portfolio
           </Button>
+          <Button size="small" onClick={() => setShowIncrease(true)}>
+            Increase portfolio
+          </Button>
         </Stack>
 
         {/* Display portfolio feature */}
-        {data.length > 0 ? (
+        {jsonData.length > 0 ? (
           <DataGrid
             sx={{ color: "white", root: "white", text: { color: "white" } }}
             rows={rows}
@@ -334,7 +349,7 @@ export default function Investment() {
           {jsonResults.length > 0 && (
             <div>
               <List>{displaySearchResult}</List>
-              <form>
+              <form onSubmit={handleAddPortfolio}>
                 <Button variant="contained" type="submit">
                   Add Portfolio
                 </Button>
@@ -355,48 +370,47 @@ export default function Investment() {
       </Modal>
 
       {/* Display company overview after search feature */}
-      <Modal open={showCompany} onClose={handleCloseCompanyView}>
+      <Modal open={showCompany} onClose={resetCompanyData}>
         <div className="company-overview">
           <CompanyDetailsTemplate data={companyData} />
           <div className="company-overview-close-btn">
-            <Button
-              size="large"
-              variant="contained"
-              onClick={handleCloseCompanyView}
-            >
+            <Button size="large" variant="contained" onClick={resetCompanyData}>
               Close
             </Button>
           </div>
         </div>
       </Modal>
 
-      {/* Reduce or Delete portfolio feature */}
-      <Modal open={showReduce || showDelete} onClose={resetPortfolio}>
+      {/* Reduce or Increase portfolio feature */}
+      <Modal open={showReduce || showIncrease} onClose={resetPortfolio}>
         <Box sx={style} overflow={true}>
           <h2 className="reduce-delete-portfolio-title">
-            {showReduce ? "Reduce Portfolio" : "Delete Portfolio"}
+            {showReduce ? "Reduce Portfolio" : "Increase Portfolio"}
           </h2>
           <Divider sx={{ marginBottom: "10px" }} />
           <div>{displayUserPortfolio}</div>
           {showForm ? (
-            <form>
+            <form
+              onSubmit={
+                showReduce ? handleReducePortfolio : handleIncreasePortfolio
+              }
+            >
               {/* {handleReducePortfolio} */}
               <Divider sx={{ marginBottom: "10px" }} />
-              <Typography color={showDelete ? "red" : "blue"}>
-                {data &&
-                  showReduce &&
+              <Typography color={showReduce ? "red" : "blue"}>
+                {jsonData &&
                   selectedCompany &&
-                  `Name: ${data[selectedCompany].name}`}
-                {data &&
-                  showDelete &&
-                  selectedCompany &&
-                  `Press Confirm to DELETE ${data[selectedCompany].name} from your portfolio`}
+                  `Symbol: ${jsonData[selectedCompany].stockData.symbol}`}
               </Typography>
-              {selectedCompany && showReduce && (
+              {selectedCompany && (
                 <FormControl fullWidth>
                   <TextField
-                    className="reduce-units"
-                    label="Reduce Holdings (Units)"
+                    className="edit-units"
+                    label={
+                      showReduce
+                        ? "Reduce Holdings (Units)"
+                        : "Increase Holdings (Units)"
+                    }
                     variant="outlined"
                     value={units}
                     margin="normal"
@@ -410,8 +424,10 @@ export default function Investment() {
                     }}
                   />
                   <TextField
-                    className="selling-price"
-                    label="Selling Price ($)"
+                    className="purchasePrice"
+                    label={
+                      showReduce ? "Selling Price ($)" : "Buying Price ($)"
+                    }
                     variant="outlined"
                     value={price}
                     type="number"
@@ -428,6 +444,35 @@ export default function Investment() {
                   />
                 </FormControl>
               )}
+              <Divider sx={{ marginBottom: "10px" }} />
+              <Button variant="contained" type="submit">
+                Confirm
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={resetPortfolio}
+              >
+                Cancel
+              </Button>
+            </form>
+          ) : null}
+        </Box>
+      </Modal>
+
+      <Modal open={showDelete} onClose={resetPortfolio}>
+        <Box sx={style} overflow={true}>
+          <h2 className="reduce-delete-portfolio-title">Delete Portfolio</h2>
+          <Divider sx={{ marginBottom: "10px" }} />
+          <div>{displayUserPortfolio}</div>
+          {showForm ? (
+            <form onSubmit={handleDeletePortfolio}>
+              <Divider sx={{ marginBottom: "10px" }} />
+              <Typography color="red">
+                {jsonData &&
+                  selectedCompany &&
+                  `Are you sure to delete the portfolio, Symbol: ${jsonData[selectedCompany].stockData.symbol}`}
+              </Typography>
               <Divider sx={{ marginBottom: "10px" }} />
               <Button variant="contained" type="submit">
                 Confirm

@@ -1,6 +1,6 @@
 .css-wop1k0-MuiDataGrid-footerContainer {
   background-color: #ffffff;
-  color: black;
+  color: #000000;
 }
 
 .reduce-delete-portfolio-title {
@@ -11,4 +11,8 @@
 .company-overview-close-btn {
   display: flex;
   justify-content: center;
+}
+
+.css-1pe4mpk-MuiButtonBase-root-MuiIconButton-root {
+  color: #ffffff;
 }
