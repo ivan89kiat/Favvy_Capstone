@@ -44,8 +44,21 @@ export default function Investment() {
         setJsonData(data);
       })
       .catch((error) => console.log(error.message));
-  }, [selectedCompanyBE]);
+  }, [
+    selectedCompanyBE,
+    showDelete,
+    showIncrease,
+    searchPortfolio,
+    showReduce,
+  ]);
 
+  useEffect(() => {
+    for (let i = 0; i < jsonData.length; i++) {
+      axios.get(`${BACKEND_URL}/api/stockdata/${jsonData[i].stockData.symbol}`);
+    }
+  }, []);
+
+  console.log(jsonData);
   const columns = [
     {
       field: "symbol",
@@ -225,6 +238,7 @@ export default function Investment() {
     setShowDelete(false);
     setShowReduce(false);
     setShowIncrease(false);
+    setSearchPortfolio(false);
   };
 
   const handleReducePortfolio = async (e) => {
@@ -242,7 +256,6 @@ export default function Investment() {
       },
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
-    console.log("this is running");
     resetPortfolio();
   };
 
@@ -279,7 +292,7 @@ export default function Investment() {
 
   const handleAddPortfolio = async (e) => {
     e.preventDefault();
-    axios.post(
+    await axios.post(
       `${BACKEND_URL}/investment/${dbUser.id}`,
       { selectedCompany },
       { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -327,7 +340,6 @@ export default function Investment() {
       {/* Search portfolio feature */}
       <Modal
         open={searchPortfolio}
-        onClose={resetSearch}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
@@ -370,7 +382,7 @@ export default function Investment() {
       </Modal>
 
       {/* Display company overview after search feature */}
-      <Modal open={showCompany} onClose={resetCompanyData}>
+      <Modal open={showCompany}>
         <div className="company-overview">
           <CompanyDetailsTemplate data={companyData} />
           <div className="company-overview-close-btn">
@@ -382,7 +394,7 @@ export default function Investment() {
       </Modal>
 
       {/* Reduce or Increase portfolio feature */}
-      <Modal open={showReduce || showIncrease} onClose={resetPortfolio}>
+      <Modal open={showReduce || showIncrease}>
         <Box sx={style} overflow={true}>
           <h2 className="reduce-delete-portfolio-title">
             {showReduce ? "Reduce Portfolio" : "Increase Portfolio"}
@@ -459,7 +471,7 @@ export default function Investment() {
         </Box>
       </Modal>
 
-      <Modal open={showDelete} onClose={resetPortfolio}>
+      <Modal open={showDelete}>
         <Box sx={style} overflow={true}>
           <h2 className="reduce-delete-portfolio-title">Delete Portfolio</h2>
           <Divider sx={{ marginBottom: "10px" }} />
