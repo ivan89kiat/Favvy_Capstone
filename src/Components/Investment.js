@@ -58,7 +58,6 @@ export default function Investment() {
     }
   }, []);
 
-  console.log(jsonData);
   const columns = [
     {
       field: "symbol",

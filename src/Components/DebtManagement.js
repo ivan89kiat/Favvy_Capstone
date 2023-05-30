@@ -62,7 +62,6 @@ export default function DebtManagement() {
   useEffect(() => {
     axios.get(`${BACKEND_URL}/loan/${dbUser.id}`).then((res) => {
       const { data } = res;
-      console.log(data);
       setData(data);
     });
   }, [showLoanForm, showDelete]);

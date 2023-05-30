@@ -99,7 +99,6 @@ export default function History() {
       .catch((error) => console.log(error.message));
   }, [updatedBalance]);
 
-  console.log(availableBalance);
   const newAvailableBalance = () => {
     let newAvailableBalance = 0;
     if (selectedType === "income") {
