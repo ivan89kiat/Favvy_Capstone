@@ -8,16 +8,13 @@ import logo from "../logo.png";
 
 export default function Login() {
   const { isAuthenticated } = useAuth0();
-  const auth0 = useAuth0();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      alert("Welcome to Favvy");
     }
   }, [isAuthenticated]);
 
-  console.log(isAuthenticated);
   return (
     <div>
       <img className="login-logo" src={logo} />

@@ -395,7 +395,6 @@ export default function Investment() {
                 showReduce ? handleReducePortfolio : handleIncreasePortfolio
               }
             >
-              {/* {handleReducePortfolio} */}
               <Divider sx={{ marginBottom: "10px" }} />
               <Typography color={showReduce ? "red" : "blue"}>
                 {jsonData &&

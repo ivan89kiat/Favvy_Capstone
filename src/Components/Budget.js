@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
-import { Modal, Form } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import {
   InputLabel,
   TextField,
@@ -17,6 +17,12 @@ import {
   TableRow,
   Paper,
   Box,
+  Card,
+  CardContent,
+  Typography,
+  Divider,
+  Modal,
+  Stack,
 } from "@mui/material";
 import { BACKEND_URL } from "./constant";
 import { UserAuth } from "./UserContext";
@@ -38,6 +44,18 @@ export default function Budget() {
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [category, setCategory] = useState([]);
   const [budgetData, setBudgetData] = useState([]);
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 500,
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    boxShadow: 24,
+    p: 4,
+  };
 
   useEffect(() => {
     axios
@@ -183,78 +201,85 @@ export default function Budget() {
 
   return (
     <div>
+      <h2>Budget Management</h2>
       <div className="budget-section-1">
-        <div className="budget-balance">Budget Balance: $ {balance}</div>
+        <div className="budget-balance"></div>
         <div className="budget-category">
-          Add Budget:
-          <button
-            onClick={() => {
-              setShow(true);
-            }}
-          >
-            Add
-          </button>
-          <Modal show={show} backdrop="static" centered>
-            <button type="button" className="btn-close" onClick={resetEdit}>
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <Modal.Header>
-              <Modal.Title>Add Budget</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
+          <Paper>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" align="left">
+                  Budget Balance: $ {balance}
+                </Typography>
+                <Divider sx={{ marginBottom: "3px" }} />
+              </CardContent>
+            </Card>
+          </Paper>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <Stack direction="row" spacing={1} sx={{ m: 1 }}>
+              <Button
+                size="large"
+                onClick={() => setShow(true)}
+                variant="contained"
+              >
+                Add Budget
+              </Button>
+            </Stack>
+          </div>
+          <Modal open={show}>
+            <Box sx={style}>
+              <Typography>Add Budget</Typography>{" "}
               <Form onSubmit={handleCreateBudget}>
-                <Box sx={{ minWidth: 120 }}>
-                  <FormControl fullWidth>
-                    <InputLabel className="budget-category-selection-label">
-                      Category
-                    </InputLabel>
-                    <Select
-                      className="budget-category-selection"
-                      value={selectedCategory}
-                      label="Category"
-                      onChange={(e) => {
-                        setSelectedCategory(e.target.value);
-                      }}
-                    >
-                      {filteredCategory.map((item) => (
-                        <MenuItem
-                          value={item.name}
-                          key={item.id}
-                          onClick={() => setSelectedCategoryId(item.id)}
-                        >
-                          {item.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <br />
-                  <FormControl fullWidth>
-                    <TextField
-                      className="set-amount"
-                      label="Set Amount ($)"
-                      variant="outlined"
-                      value={amount}
-                      margin="normal"
-                      inputProps={{ inputMode: "numeric" }}
-                      onChange={handleAmountChange}
-                    />
-                  </FormControl>
-                  <Button variant="contained" type="submit">
-                    Confirm
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={resetCreate}
+                <FormControl fullWidth>
+                  <InputLabel className="budget-category-selection-label">
+                    Category
+                  </InputLabel>
+                  <Select
+                    className="budget-category-selection"
+                    value={selectedCategory}
+                    label="Category"
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                    }}
                   >
-                    Cancel
-                  </Button>
-                </Box>
+                    {filteredCategory.map((item) => (
+                      <MenuItem
+                        value={item.name}
+                        key={item.id}
+                        onClick={() => setSelectedCategoryId(item.id)}
+                      >
+                        {item.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <br />
+                <FormControl fullWidth>
+                  <TextField
+                    className="set-amount"
+                    label="Set Amount ($)"
+                    variant="outlined"
+                    value={amount}
+                    margin="normal"
+                    inputProps={{ inputMode: "numeric" }}
+                    onChange={handleAmountChange}
+                  />
+                </FormControl>
+                <Button variant="contained" type="submit">
+                  Confirm
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={resetCreate}
+                >
+                  Cancel
+                </Button>{" "}
               </Form>
-            </Modal.Body>
+            </Box>
           </Modal>
         </div>
-        <div>
+        <div style={{ width: "100%", height: "400px", overflow: "auto" }}>
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 950 }} aria-label="budget table">
               <TableHead>
@@ -321,69 +346,62 @@ export default function Budget() {
               </TableBody>
             </Table>
           </TableContainer>
-          <Modal show={edit} backdrop="static" centered>
-            <button type="button" className="btn-close" onClick={resetEdit}>
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <Modal.Header>
-              <Modal.Title>Edit Budget</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
+          <Modal open={edit}>
+            <Box sx={style}>
               <Form onSubmit={handleEditBudget}>
-                <Box sx={{ minWidth: 120 }}>
-                  <FormControl fullWidth>
-                    <TextField
-                      className="edit-category"
-                      label="Category"
-                      variant="outlined"
-                      value={selectedCategory}
-                      margin="normal"
-                      InputProps={{
-                        readOnly: true,
-                      }}
-                    />
-                  </FormControl>
-                  <br />
-                  <FormControl fullWidth>
-                    <TextField
-                      className="set-amount"
-                      label="Set Amount ($)"
-                      variant="outlined"
-                      value={amount}
-                      margin="normal"
-                      inputProps={{ inputMode: "numeric" }}
-                      onChange={handleAmountChange}
-                    />
-                  </FormControl>{" "}
-                  <Button variant="contained" type="submit">
-                    Save Changes
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={resetEdit}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    color="error"
-                    onClick={() => {
-                      setDeleteStatus(true);
+                <Typography>Edit Budget</Typography>
+                <FormControl fullWidth>
+                  <TextField
+                    className="edit-category"
+                    label="Category"
+                    variant="outlined"
+                    value={selectedCategory}
+                    margin="normal"
+                    InputProps={{
+                      readOnly: true,
                     }}
-                  >
-                    Delete
-                  </Button>
-                </Box>
-              </Form>{" "}
-            </Modal.Body>
+                  />
+                </FormControl>
+                <br />
+                <FormControl fullWidth>
+                  <TextField
+                    className="set-amount"
+                    label="Set Amount ($)"
+                    variant="outlined"
+                    value={amount}
+                    margin="normal"
+                    inputProps={{ inputMode: "numeric" }}
+                    onChange={handleAmountChange}
+                  />
+                </FormControl>{" "}
+                <Button variant="contained" type="submit">
+                  Save Changes
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={resetEdit}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  color="error"
+                  onClick={() => {
+                    setDeleteStatus(true);
+                  }}
+                >
+                  Delete
+                </Button>
+              </Form>
+            </Box>
           </Modal>
-          <Modal show={deleteStatus} backdrop="static" centered>
-            <Modal.Header>
-              <Modal.Title>Delete Budget</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              Are you sure to delete this budget? Transaction history related to
-              this budget will be deleted.
+          <Modal open={deleteStatus}>
+            <Box sx={style}>
+              <Typography>Delete Budget</Typography>
+              <Typography>
+                Are you sure to delete this budget? Transaction history related
+                to this budget will be deleted.
+              </Typography>
               <Form onSubmit={handleDeleteBudget}>
                 <FormControl>
                   <Button variant="contained" type="submit" color="error">
@@ -394,7 +412,7 @@ export default function Budget() {
                   </Button>
                 </FormControl>
               </Form>
-            </Modal.Body>
+            </Box>
           </Modal>
         </div>
       </div>

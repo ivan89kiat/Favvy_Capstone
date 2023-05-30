@@ -65,7 +65,7 @@ export default function History() {
         setCategory(data);
       })
       .catch((error) => console.log(error.message));
-  }, []);
+  }, [showEdit]);
 
   useEffect(() => {
     axios
@@ -193,22 +193,17 @@ export default function History() {
     await axios.delete(`${BACKEND_URL}/history/${selectedTransactionId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    console.log("this is running");
+
     setShowDelete(false);
     resetTransaction();
   };
 
-  console.log("selectedCategory", selectedCategory);
-  console.log("transactionAmount", transactionAmount);
-  console.log("selectedCategoryId", selectedCategoryId);
-  console.log("selectedType", selectedType);
-  console.log("selectedTransactionId", selectedTransactionId);
-  console.log("editedTransactionAmount", editedTransactionAmount);
+  const descendedHistory = historyData.sort((a, b) => b.id - a.id);
 
   return (
     <div>
-      <h2>Transaction History</h2>
       <Paper
+        style={{ height: "100vh" }}
         sx={{
           padding: "20px",
           marginBottom: "20px",
@@ -229,8 +224,10 @@ export default function History() {
             </Paper>
           </Grid>
           <Divider sx={{ marginBottom: "10px" }} />
-          <Grid item xs={7}>
-            <Paper>
+          <Grid item xs={9}>
+            <Paper style={{ width: "100%", height: "450px", overflow: "auto" }}>
+              <Typography variant="h5">Transaction</Typography>
+              <Divider sx={{ marginBottom: "1px" }} />
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -245,7 +242,7 @@ export default function History() {
                   <TableBody>
                     {historyData &&
                       historyData.map((row) => (
-                        <TableRow key={row.id}>
+                        <TableRow key={row.id} hover>
                           <TableCell align="center">{row.category}</TableCell>
                           <TableCell align="center">{row.type}</TableCell>
                           <TableCell align="center">${row.amount}</TableCell>
@@ -297,7 +294,7 @@ export default function History() {
             </Paper>
           </Grid>
 
-          <Grid item xs={5}>
+          <Grid item xs={3}>
             <Paper>
               <Box>
                 <Typography>Transaction Entry</Typography>

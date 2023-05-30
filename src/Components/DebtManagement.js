@@ -56,12 +56,15 @@ export default function DebtManagement() {
   };
 
   useEffect(() => {
+    calcCurrentLiabilities();
+  }, [data]);
+
+  useEffect(() => {
     axios.get(`${BACKEND_URL}/loan/${dbUser.id}`).then((res) => {
       const { data } = res;
       console.log(data);
       setData(data);
     });
-    calcCurrentLiabilities();
   }, [showLoanForm, showDelete]);
 
   const calculateEMI = () => {
@@ -91,6 +94,8 @@ export default function DebtManagement() {
     setTotalAmount(0);
     setTotalInterest(0);
     setInterestRate(0);
+    setLoanAmount(0);
+    setLoanTerm(0);
     setEMI(0);
   };
 
