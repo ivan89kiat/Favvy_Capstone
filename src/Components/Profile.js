@@ -15,8 +15,6 @@ export default function Profile() {
   const [retiredAge, setRetiredAge] = useState("");
   const [targetExpenses, setTargetExpenses] = useState("");
   const [estInflation, setEstInflation] = useState("");
-  const [pLExpenses, setPLExpenses] = useState("");
-  const [totalSum, setTotalSum] = useState("");
   const [userData, setUserData] = useState([]);
   const [goal, setGoal] = useState([]);
 
