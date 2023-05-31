@@ -16,7 +16,7 @@ export default function Login() {
 
   return (
     <div>
-      <img className="login-logo" src={logo} />
+      <img className="login-logo" src={logo} alt="" />
       <div> Welcome to Favvy</div>
       <div>{!isAuthenticated ? <LoginButton /> : <LogoutButton />}</div>
     </div>

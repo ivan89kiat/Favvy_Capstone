@@ -35,7 +35,7 @@ export function UserProvider({ children }) {
 
   useEffect(() => {
     checkUser();
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <UserContext.Provider value={{ dbUser, accessToken }}>
