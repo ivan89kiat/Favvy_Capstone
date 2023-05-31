@@ -92,11 +92,6 @@ export default function Budget() {
       .catch((error) => console.log(error.message));
   }, [dbUser, edit, show]);
 
-  useEffect(() => {
-    calcBudgetBalance();
-    filterCategory();
-  }, [budgetData]);
-
   const updatedBudgetData =
     budgetData &&
     budgetData.map((budget) => {
@@ -105,7 +100,8 @@ export default function Budget() {
           category.findIndex((object) => object.id === budget.budgetCategory_id)
         ].name;
       const categorySpending = totalSpending[categoryName] || 0;
-      const categoryBalance = budget.amount - totalSpending[categoryName] || 0;
+      const categoryBalance =
+        budget.amount - totalSpending[categoryName] || budget.amount;
       return {
         ...budget,
         spending: categorySpending,
@@ -113,6 +109,11 @@ export default function Budget() {
         remainingBalance: categoryBalance,
       };
     });
+
+  useEffect(() => {
+    calcBudgetBalance();
+    filterCategory();
+  }, [budgetData]);
 
   const calcBudgetBalance = () => {
     let sum = 0;
@@ -137,11 +138,15 @@ export default function Budget() {
 
   const handleCreateBudget = async (e) => {
     e.preventDefault();
+    let newBalance = amount;
+    console.log(newBalance);
+    console.log(amount);
     await axios.post(
       `${BACKEND_URL}/budget/${dbUser.id}`,
       {
         selectedCategoryId,
         amount,
+        newBalance,
       },
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );

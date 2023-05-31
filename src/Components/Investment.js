@@ -407,11 +407,6 @@ export default function Investment() {
               }
             >
               <Divider sx={{ marginBottom: "10px" }} />
-              <Typography color={showReduce ? "red" : "blue"}>
-                {jsonData &&
-                  selectedCompany &&
-                  `Symbol: ${jsonData[selectedCompany].stockData.symbol}`}
-              </Typography>
               {selectedCompany && (
                 <FormControl fullWidth>
                   <TextField
@@ -477,12 +472,6 @@ export default function Investment() {
           <div>{displayUserPortfolio}</div>
           {showForm ? (
             <form onSubmit={handleDeletePortfolio}>
-              <Divider sx={{ marginBottom: "10px" }} />
-              <Typography color="red">
-                {jsonData &&
-                  selectedCompany &&
-                  `Are you sure to delete the portfolio, Symbol: ${jsonData[selectedCompany].stockData.symbol}`}
-              </Typography>
               <Divider sx={{ marginBottom: "10px" }} />
               <Button variant="contained" type="submit">
                 Confirm

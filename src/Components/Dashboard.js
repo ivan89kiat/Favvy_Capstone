@@ -15,9 +15,7 @@ import { BACKEND_URL } from "./constant";
 import { UserAuth } from "./UserContext";
 
 export default function Dashboard() {
-  const { isAuthenticated } = useAuth0();
   const { dbUser, accessToken } = UserAuth();
-  const navigate = useNavigate();
 
   const [availableBalance, setAvailableBalance] = useState(0);
   const [liabilities, setLiabilities] = useState(0);
@@ -55,7 +53,7 @@ export default function Dashboard() {
 
     retrieveProfile();
     retrieveGoal();
-  }, [dbUser]);
+  }, [dbUser.id]);
 
   useEffect(() => {
     calcCurrentLiabilities();
