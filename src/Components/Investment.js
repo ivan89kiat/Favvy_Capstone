@@ -45,6 +45,7 @@ export default function Investment() {
       })
       .catch((error) => console.log(error.message));
   }, [
+    dbUser.id,
     selectedCompanyBE,
     showDelete,
     showIncrease,

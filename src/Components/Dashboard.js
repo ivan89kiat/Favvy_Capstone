@@ -1,6 +1,4 @@
-import { useAuth0 } from "@auth0/auth0-react";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Container,
   Grid,
@@ -15,10 +13,7 @@ import { BACKEND_URL } from "./constant";
 import { UserAuth } from "./UserContext";
 
 export default function Dashboard() {
-  const { isAuthenticated } = useAuth0();
   const { dbUser, accessToken } = UserAuth();
-  const navigate = useNavigate();
-
   const [availableBalance, setAvailableBalance] = useState(0);
   const [liabilities, setLiabilities] = useState(0);
   const [totalLiabilities, setTotalLiabilities] = useState(0);

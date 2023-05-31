@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardContent,
   Divider,
-  Button,
 } from "@mui/material";
 import "./CompanyDetailsTemplate.css";
 

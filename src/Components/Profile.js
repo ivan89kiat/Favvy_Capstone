@@ -1,4 +1,3 @@
-import { useAuth0 } from "@auth0/auth0-react";
 import React, { useEffect, useState } from "react";
 import { UserAuth } from "./UserContext";
 import axios from "axios";
@@ -7,7 +6,6 @@ import { Paper, Box, Grid, TextField, Divider, Button } from "@mui/material";
 
 export default function Profile() {
   const { dbUser, accessToken } = UserAuth();
-  const { isAuthenticated } = useAuth0();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -24,7 +22,6 @@ export default function Profile() {
 
   useEffect(() => {
     retrieveGoal();
-    calcProjectedLivingExpenses();
   }, [userData.dobirth]);
 
   useEffect(() => {
@@ -91,30 +88,6 @@ export default function Profile() {
       },
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
-  };
-
-  const calcProjectedLivingExpenses = () => {
-    const retirementAge = parseInt(goal.retirement_age);
-
-    const numOfYearsTillRetired =
-      new Date(userData.dobirth).getFullYear() +
-      retirementAge -
-      new Date().getFullYear();
-
-    const estimatedInflation = parseInt(goal.est_inflation) / 100 + 1;
-
-    const totalInflation = Math.pow(estimatedInflation, numOfYearsTillRetired);
-
-    const projectedLivingExpenses = Math.round(
-      parseInt(goal.target_expenses) * totalInflation
-    );
-
-    const numOfYearsTill85 = 85 - retirementAge;
-
-    const totalSumNeeded = projectedLivingExpenses * numOfYearsTill85 * 12;
-
-    setPLExpenses(projectedLivingExpenses);
-    setTotalSum(totalSumNeeded);
   };
 
   const handleSubmitGoal = async (e) => {

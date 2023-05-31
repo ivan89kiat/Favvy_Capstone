@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import { Form } from "react-bootstrap";
 import {
@@ -29,7 +28,6 @@ import { UserAuth } from "./UserContext";
 
 export default function Budget() {
   const { dbUser, accessToken } = UserAuth();
-  const { isAuthenticated } = useAuth0();
   const [show, setShow] = useState(false);
   const [edit, setEdit] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState(false);
